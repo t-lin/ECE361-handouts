@@ -347,6 +347,13 @@
 
 \setlength{\parskip}{5pt} % 1ex plus 0.5ex minus 0.2ex}
 
+% If current month is before May, assume generating for Winter
+\ifnum\month<5
+    \def\semester{Winter}
+\else
+    \def\semester{Fall}
+\fi
+
 % Headers and footers
 \pagestyle{fancy}
 \fancyhead{}
@@ -354,7 +361,7 @@
 \fancyhead[L]{ECE361}
 \fancyhead[C]{Computer Networks I}
 %\fancyhead[R]{Lab \thelab}
-\fancyhead[R]{Winter \the\year}
+\fancyhead[R]{\semester~\the\year}
 %\fancyfoot[L]{Due \datedue}
 \fancyfoot[R]{Page \thepage\ of \pageref{LastPage}}
 
