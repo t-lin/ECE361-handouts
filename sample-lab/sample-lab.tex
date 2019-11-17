@@ -1,0 +1,100 @@
+\documentclass[11pt]{article}
+
+\usepackage{../style/ece361}
+
+%-------------------------------------------------------------------------------------------------
+
+% Lab parameters
+\def\thelab{0}
+\def\datedue{Dec. 31, 1969 @ 7 PM}
+
+\useCompactTitle{ECE361 Lab \thelab}{Sample Lab Document}
+
+%-------------------------------------------------------------------------------------------------
+\begin{document}
+% Create title page, and force header and footer onto it
+\maketitle \thispagestyle{fancy}
+
+\hfill {\large \textbf{Due \datedue}}
+%-------------------------------------------------------------------------------------------------
+
+
+%-------------------------------------------------------------------------------------------------
+\section{Overview}
+\label{sec:overview}
+%-------------------------------------------------------------------------------------------------
+The ability to access and manipulate data over a networked connection has become a fundamental feature in most modern day applications and services. Chances are, if you are taking this course, you have likely never owned a computing device without a network connection. We live in an increasingly data-driven and networked society powered by applications and services that are constantly communicating data.
+
+\think{You can use this box to ask thought-inducing questions. For example, can anyone guess the significance of the due date?}
+
+
+
+%-------------------------------------------------------------------------------------------------
+\section{Prelab}
+\label{sec:prelab}
+%-------------------------------------------------------------------------------------------------
+Any prelab instructions go here.
+
+\work{You can use this box to highlight a specific work item.\\
+e.g. Finish the prelab \textbf{BEFORE} the lab.}
+
+If the lab doesn't have any pre-lab, you can easily comment this section out.
+
+%-------------------------------------------------------------------------------------------------
+\section{Part 1: Fancy description here}
+\label{sec:part1}
+%-------------------------------------------------------------------------------------------------
+Description of part 1 (or 2, or 3, etc.) here.
+
+\hint{If you want to stress a hint for students, you can use this box.}
+
+This part can be broken down into multiple sub-parts...
+
+\subsection{Step one}
+\label{subsec:part1-step1}
+Printing out status and/or error messages in the code is a great way to debug.
+
+\subsection{Step two}
+\label{subsec:part1-step2}
+Closing out part 1, enjoy this image of Spock.
+
+% figvs takes 4 parameters (see the style sheet for source code)
+%   1) Image width (w.r.t. column)
+%   2) Image file name
+%   3) Other 'includegraphics' parameters
+%   4) Caption
+\figvs{0.4}{spock}{trim=0cm 0cm 0cm 0cm,clip}{Spock from Amok Time. First aired Sept. 15th 1967.}
+
+%-------------------------------------------------------------------------------------------------
+\section{Part 2: Oh no! Some code!}
+\label{sec:part2}
+%-------------------------------------------------------------------------------------------------
+We can even embed code snippets.
+\begin{lstlisting}[caption={Some snippet of code}, language=Python]
+hellostr = "Hello"
+worldstr = "world!"
+
+print hellostr + worldstr
+\end{lstlisting}
+
+\warn{Warning to students: don't divide by 0!}
+
+%-------------------------------------------------------------------------------------------------
+\section{TA Grading}
+\label{sec:tagrading}
+%-------------------------------------------------------------------------------------------------
+Questions asked by TAs will be worth 20\% of your mark.
+
+%-------------------------------------------------------------------------------------------------
+\section{Exerciser}
+\label{sec:exercise}
+%-------------------------------------------------------------------------------------------------
+To run the exerciser, lift up the PC and do 50 laps around Galbraith building.
+
+%-------------------------------------------------------------------------------------------------
+\section{Submission}
+\label{sec:submission}
+%-------------------------------------------------------------------------------------------------
+Some submission instructions here.
+
+\end{document}
