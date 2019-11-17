@@ -1,0 +1,362 @@
+%
+% Common latex style/setup for ECE361 documents
+%
+
+\def\docsRoot{..} % used for common assets, etc. Override after \usepackage{ece361}
+
+\usepackage[T1]{fontenc} %Attempt to fix PDF copy-paste issues
+\usepackage{lmodern} %Forces Type1 (vectorized) font 'latin modern'
+                     %This removes the Type3 (bitmap) fonts enabled by T1 fontenc
+\usepackage{microtype}
+\DisableLigatures{encoding = *, family = cmvtt}
+
+\usepackage[bookmarksopen=false, pdfpagemode=UseNone]{hyperref}
+\usepackage{graphicx}
+\hypersetup{colorlinks=true}
+
+\usepackage{fancyhdr}
+\usepackage{fancyvrb}
+\usepackage[margin=1.0in]{geometry}
+
+\usepackage[framemethod=tikz]{mdframed}
+\usepackage{wrapfig}
+
+\usepackage{color}
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+
+\usepackage{listings}
+\usepackage{titling}
+\usepackage{tikz}
+\usetikzlibrary{calc,positioning,shapes,arrows.meta}
+
+\usepackage{xspace}
+
+\usepackage[inline]{enumitem}
+
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{tabu} % an ultimate, but outdated table package
+\tabulinesep=1.2mm % fix minimum spacing. In particular for paragraph cells
+
+\usepackage{lastpage}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{textcomp}
+%\usepackage{times}
+\usepackage[mathscr]{euscript}
+\usepackage[normalem]{ulem}
+
+\usepackage[capitalize, noabbrev]{cleveref}
+\crefname{lstlisting}{Listing}{Listings} %Fix clever refs to listings
+
+\usepackage{placeins} %can be used to keep all floats of a section *in* that section (e.g. prevent figure from section 2 from being placed in section3)
+\usepackage{float}
+\usepackage{multicol} % for a mixed number of columns in a document
+
+\newcommand\useCompactTitle[2]{%
+  \setlength{\droptitle}{-5em}
+  \title{#1\\\textbf{#2}}%
+  \date{\vspace{-15ex}} % unset it & negate spacing
+  \author{\vspace{-16ex}} % unset it & negate spacing
+}
+
+\newcommand\useQuickStartGuideTitle[1]{\useCompactTitle{{\normalsize The} ECE361 Quick Start Guide {\normalsize Series}}{#1}}
+
+\def\quoteSignature #1{{\leavevmode\unskip\nobreak\hfil\penalty50\hskip2em
+  \hbox{}\nobreak\hfil--- #1%
+  \parfillskip=0pt \finalhyphendemerits=0 \endgraf}}
+
+\newcommand\titleQuote[2]{\emph{``#1''}\\\vspace{1ex}\quoteSignature{#2}}
+
+\newlist{compactItemize}{itemize}{3}
+\setlist[compactItemize]{label=\textbullet,nosep,after=\vspace{-0.5\baselineskip}}
+
+%Highlighting which respects syntax from: https://tex.stackexchange.com/questions/15237/highlight-text-in-code-listing-while-also-keeping-syntax-highlighting/
+% \makeatletter
+\newenvironment{btHighlight}[1][]
+{\begingroup\tikzset{bt@Highlight@par/.style={#1}}\begin{lrbox}{\@tempboxa}}
+{\end{lrbox}\bt@HL@box[bt@Highlight@par]{\@tempboxa}\endgroup}
+
+\newcommand\btHL[1][]{%
+  \begin{btHighlight}[#1]\bgroup\aftergroup\bt@HL@endenv%
+}
+\def\bt@HL@endenv{%
+  \end{btHighlight}%   
+  \egroup
+}
+\newcommand{\bt@HL@box}[2][]{%
+  \tikz[#1]{%
+    \pgfpathrectangle{\pgfpoint{1pt}{0pt}}{\pgfpoint{\wd #2}{\ht #2}}%
+    \pgfusepath{use as bounding box}%
+    \node[anchor=base west, fill=orange!30,outer sep=0pt,inner xsep=1pt, inner ysep=0pt, rounded corners=3pt, minimum height=\ht\strutbox+1pt,#1]{\raisebox{1pt}{\strut}\strut\usebox{#2}};
+  }%
+}
+% \makeatother
+
+% listing config
+\lstdefinestyle{ece361-base}{
+  backgroundcolor=\color{white},   % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}
+  basicstyle=\small\ttfamily,% the size of the fonts that are used for the code
+  breakatwhitespace=false,         % sets if automatic breaks should only happen at whitespace
+  breaklines=true,                 % sets automatic line breaking
+  captionpos=b,                    % sets the caption-position to bottom
+  commentstyle=\color{mygreen},    % comment style
+  escapeinside={(@"}{"@)},         % if you want to add LaTeX within your code
+  extendedchars=true,              % lets you use non-ASCII characters; for 8-bits encodings only, does not work with UTF-8
+  frame=single,                    % adds a frame around the code
+  keepspaces=true,                 % keeps spaces in text, useful for keeping indentation of code (possibly needs columns=flexible)
+  keywordstyle=\color{blue},       % keyword style 
+  language=,                       % the language of the code
+  numbers=left,                    % where to put the line-numbers; possible values are (none, left, right)
+  numbersep=5pt,                   % how far the line-numbers are from the code
+  numberstyle=\tiny\color{mygray}, % the style that is used for the line-numbers
+  rulecolor=\color{black},         % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. comments (green here))
+  showspaces=false,                % show spaces everywhere adding particular underscores; it overrides 'showstringspaces'
+  showstringspaces=false,          % underline spaces within strings only
+  showtabs=false,                  % show tabs within strings adding particular underscores
+  stepnumber=1,                    % the step between two line-numbers. If it's 1, each line will be numbered
+  stringstyle=\color{mymauve},     % string literal style
+  tabsize=2,                       % sets default tabsize to 2 spaces
+  title=\lstname,                  % show the filename of files included with \lstinputlisting; also try caption instead of title
+  columns=flexible,                % Change how columns laid-out.  Options: fixed, flexible, fullflexible. Default: fixed which can cause Acrobat to insert spaces when text is copy-pasted from PDF. Using flexible + basicstyle=\ttfamily gives us fixed-width alignment with working copy-paste
+}
+
+\lstset{style=ece361-base} % the default for all listings
+
+%%%% Base listing styles %%%%
+
+% a base style for listings with a Teletype font
+\lstdefinestyle{ece361-tt-base}{ style=ece361-base,
+  basicstyle=\ttfamily\footnotesize,% the size of the fonts that are used for the code
+}
+
+% a base style for shell related listings
+\lstdefinestyle{ece361-shell-base}{ style=ece361-tt-base,
+  language=csh,
+  morekeywords={git,cd,nano,vim},
+  deletekeywords={status, path},
+}
+
+% a base style for for C++ listings
+\lstdefinestyle{ece361-cpp-base}{ style=ece361-tt-base, language={C++} }
+
+%%%% Concrete listing styles %%%%
+
+% for for plain text
+\lstdefinestyle{ece361-tt-text}{ style=ece361-tt-base }
+\lstdefinestyle{empty-lst-style}{}
+
+% for unit test reference code
+\lstdefinestyle{unittestref}{
+  style=ece361-cpp-base,          % inherit settings
+  emphstyle=\textit
+  emph={
+    columns,rows,count,
+    exception\_type,expected,
+    expression,time,tolerance,actual,
+    fixture\_name,suite\_name,test\_name
+  }
+  numbers=none,
+  frame=none,
+}
+% \lstdefinestyle{unittestref}{
+%   style=ece361-tt-base,            % inherit settings
+%   % style=ece361-cpp-base,           % inherit settings
+%   emphstyle=\textit,
+% }
+
+% for unit test output
+\lstdefinestyle{unittestoutput}{
+  style=ece361-tt-base,            % inherit settings
+  language=,                    % the language of the code
+  moredelim=**[is][\btHL]{"}{"}    % inline highlighting
+}
+
+% for C++ code
+\lstdefinestyle{ece361cpp}{
+  style=ece361-cpp-base,            % inherit settings
+  emphstyle=\textit,
+  moredelim=**[is][\btHL]{`}{`}    % inline highlighting
+}
+
+% for shell sessions
+\lstdefinestyle{ece361shell}{
+  style=ece361-shell-base,          % inherit settings
+  moredelim=**[is][\btHL]{"}{"}    % inline highlighting
+}
+
+% for when you don't have a caption
+\lstdefinestyle{ece361-no-caption-space}{
+  abovecaptionskip=-0.125\baselineskip,
+  belowcaptionskip=-\baselineskip,
+}
+
+\lstdefinestyle{ece361shell-compact}{
+  style=ece361-shell-base,          % inherit settings
+  style=ece361-no-caption-space,    %
+  moredelim=[is][]{(R"}{"R)},       % unformatted text between these delimiters
+}
+
+% for shell sessions, but without keyword highlighting
+\lstdefinestyle{commandline}{
+  style=ece361-shell-base,            % inherit settings
+  keywordstyle=,       % keyword style 
+  stringstyle=,
+  morecomment=[l]{\#},
+  moredelim=**[is][\btHL]{`}{`}    % inline highlighting
+}
+
+%-------------------------------------------------------------------------------------------------
+
+%to include source code
+\newcommand{\IncludeSource}[1]{\VerbatimInput[numbers=left,fontsize=\footnotesize,baselinestretch=1]{#1}}
+\newcommand{\IncludeSourceLines}[3]{\VerbatimInput[fontsize=\footnotesize,baselinestretch=1,firstline=#1,lastline=#2]{#3}}
+\newcommand{\comment}[1]{}
+
+\newcommand{\textvtt}[1]{{\normalfont\fontfamily{cmvtt}\selectfont #1}} % variable-width typewriter
+\newcommand{\inlineCode}[1]{\textvtt{#1}}
+\newcommand{\shellCommand}{\lstinline[style=commandline, backgroundcolor=\color{yellow}, frame=single]}
+\newcommand{\fileName}[1]{\textvtt{#1}}
+
+%shortcut command for pdf figures
+\newcommand{\figvs}[4]{\begin{figure}[!h]
+\centering
+\includegraphics[width=#1\columnwidth,keepaspectratio,#3]{images/#2}
+\caption{#4}
+\label{#2}
+\end{figure}}
+
+%bold and italic
+\newcommand{\bi}[1]{\emph{#1}}
+
+%the hint box
+\newcommand{\hint}[1]{
+\par
+\begin{mdframed}[hidealllines=true,backgroundcolor=yellow!40]
+	\begin{tabular}{cl}
+		\begin{tabular}{c}
+			\includegraphics[width=.06\columnwidth,keepaspectratio,trim=0cm 10cm 4.2cm 0.3cm,clip]{\docsRoot/common-assets/bulb}	
+		\end{tabular}
+		&\begin{tabular}{l}
+			\parbox{0.85\linewidth}{#1}
+		\end{tabular}
+	\end{tabular}
+\end{mdframed}
+\par
+}
+
+%the warning box
+\newcommand{\warn}[1]{
+\par
+\begin{mdframed}[hidealllines=true,backgroundcolor=red!30]
+	\begin{tabular}{cl}
+		\begin{tabular}{c}
+			\includegraphics[width=.07\columnwidth,keepaspectratio,trim=0cm 0.45cm 0cm 0.4cm,clip]{\docsRoot/common-assets/warning}	
+		\end{tabular}
+		&\begin{tabular}{l}
+			\parbox{0.85\linewidth}{#1}
+		\end{tabular}
+	\end{tabular}
+\end{mdframed}
+\par
+}
+
+%the work box
+\newcommand{\work}[1]{
+\par
+\begin{mdframed}[hidealllines=true,backgroundcolor=blue!20]
+	\begin{tabular}{cl}
+		\begin{tabular}{c}
+			\includegraphics[width=.07\columnwidth,keepaspectratio,trim=0cm 0cm 0cm 0cm,clip]{\docsRoot/common-assets/work}	
+		\end{tabular}
+		&\begin{tabular}{l}
+			\parbox{0.85\linewidth}{#1}
+		\end{tabular}
+	\end{tabular}
+\end{mdframed}
+\par
+}
+
+%the point box
+\newcommand{\point}[1]{
+\par
+\begin{mdframed}[hidealllines=true,backgroundcolor=green!30]
+	\begin{tabular}{cl}
+		\begin{tabular}{c}
+			\includegraphics[width=.07\columnwidth,keepaspectratio,trim=0cm 0cm 0cm 0cm,clip]{\docsRoot/common-assets/point}	
+		\end{tabular}
+		&\begin{tabular}{l}
+			\parbox{0.85\linewidth}{#1}
+		\end{tabular}
+	\end{tabular}
+\end{mdframed}
+\par
+}
+
+%the point box with time
+\newcommand{\pointtime}[2]{
+\par
+\begin{mdframed}[hidealllines=true,backgroundcolor=green!30]
+	\begin{tabular}{cl}
+		\begin{tabular}{c}
+			\includegraphics[width=.07\columnwidth,keepaspectratio,trim=0cm 0cm 0cm 0cm,clip]{\docsRoot/common-assets/point}	\\
+			\textcolor{blue}{\begin{NoHyper}\url{~#1}\end{NoHyper}}
+		\end{tabular}
+		&\begin{tabular}{l}
+			\parbox{0.81\linewidth}{#2}
+		\end{tabular}
+	\end{tabular}
+\end{mdframed}
+\par
+}
+
+%the objectives box
+\newcommand{\objective}[2]{
+\par
+\begin{mdframed}[hidealllines=false,backgroundcolor=black!10]
+	\begin{tabular}{c|l}
+		\begin{tabular}{c}
+			#1
+		\end{tabular}
+		&\begin{tabular}{l}
+			\parbox{0.85\linewidth}{#2}
+		\end{tabular}
+	\end{tabular}
+\end{mdframed}
+\par
+\vspace{-0.2cm}
+}
+
+%the think box
+\newcommand{\think}[1]{
+\par
+\begin{mdframed}[hidealllines=true,backgroundcolor=green!30]
+	\begin{tabular}{cl}
+		\begin{tabular}{c}
+			\includegraphics[width=.07\columnwidth,keepaspectratio,trim=0cm 0cm 0cm 0cm,clip]{\docsRoot/common-assets/thinking_emoji.png}
+		\end{tabular}
+		&\begin{tabular}{l}
+			\parbox{0.85\linewidth}{#1}
+		\end{tabular}
+	\end{tabular}
+\end{mdframed}
+\par
+}
+
+\setlength{\parskip}{5pt} % 1ex plus 0.5ex minus 0.2ex}
+
+% Headers and footers
+\pagestyle{fancy}
+\fancyhead{}
+\fancyfoot{}
+\fancyhead[L]{ECE361}
+\fancyhead[C]{Computer Networks I}
+%\fancyhead[R]{Lab \thelab}
+\fancyhead[R]{Winter \the\year}
+%\fancyfoot[L]{Due \datedue}
+\fancyfoot[R]{Page \thepage\ of \pageref{LastPage}}
+
+\setitemize[0]{leftmargin=10pt,itemindent=10pt,itemsep=1pt}
+
