@@ -11,8 +11,8 @@ all: $(DIR_NAME).pdf
 $(DIR_NAME).pdf: $(DIR_NAME).tex
 	rm -f *.aux *.out *.log *.pdf
 # Requires two passes to get page #'s right
-	pdflatex $(PDFLATEX_FLAGS) $(DIR_NAME).tex
-	pdflatex $(PDFLATEX_FLAGS) $(DIR_NAME).tex
+	pdflatex $(PDFLATEX_FLAGS) $<
+	pdflatex $(PDFLATEX_FLAGS) $<
 
 clean:
 	rm -f *.aux *.out *.log *.pdf
