@@ -1,0 +1,131 @@
+\documentclass[11pt]{article}
+
+\usepackage{../style/ece361}
+
+%-------------------------------------------------------------------------------------------------
+
+% Lab parameters
+%\def\thelab{0}
+%\def\datedue{Dec. 31, 1969 @ 7 PM}
+
+\useCompactTitle{ECE361}{VirtualBox Setup Guide}
+
+%-------------------------------------------------------------------------------------------------
+\begin{document}
+% Create title page, and force header and footer onto it
+\maketitle \thispagestyle{fancy}
+
+%\hfill {\large \textbf{Due \datedue}}
+%-------------------------------------------------------------------------------------------------
+
+
+%-------------------------------------------------------------------------------------------------
+\section{Overview}
+\label{sec:overview}
+%-------------------------------------------------------------------------------------------------
+The labs in this course will be conducted using a Linux-based virtual machine (VM) that we will provide you. A VM is a computer that is emulated using software. This allows users to run any computer system over another underlying computer system (e.g. you can run a Windows VM in an underlying Linux computer). To run VMs, you will need a hypervisor, a software that enables multiple VMs to coexist on the same computer.
+
+In this course, you will use VirtualBox~\footnote{VirtualBox: https://www.virtualbox.org/} as the hypervisor. VirtualBox is free and available for Windows, OS X, and Linux. The purpose of this setup guide is to walk you through how to install VirtualBox on your computer, and how to set up the course VM.
+
+% These labs will be conducted using a virtual machine (VM) which we will provide you. To run this VM, you will need to download and install a software called VirtualBox (available for Windows, OS X, and Linux) on your personal computer. See the VirtualBox Setup Guide handout for details on how to install and set up the VM.
+
+%If you have trouble getting the VM to work, please either bring your laptop to the first lab session  and ask a TA for help (preferred), or make a post detailing the problem on the discussion board. If neither you nor your partner own a computer capable of running the VM, please let the head TA know, and you will be provided with a cloud-based VM which you can access via VNC.
+
+
+
+%-------------------------------------------------------------------------------------------------
+\section{Download and Installation}
+\label{sec:download}
+%-------------------------------------------------------------------------------------------------
+Download and save the appropriate installation package for your platform. To download VirtualBox, please visit: \url{https://www.virtualbox.org/wiki/Downloads}
+
+This section will walk you through the installation process. Please go to section~\ref{subsec:install-windows} if you use Windows, or section~\ref{subsec:install-osx} if you use OS X.
+
+%\work{You can use this box to highlight a specific work item.}
+
+
+%-------------------------------------------------------------------------------------------------
+\subsection{Installation (Windows)}
+\label{subsec:install-windows}
+%-------------------------------------------------------------------------------------------------
+%\hint{If you want to stress a hint for students, you can use this box.}
+This section will walk you through an installation of VirtualBox version \textbf{6.1.0} on a Windows. Other versions should have a similar process, though the following figures below may not exactly match.
+
+\textbf{Step 1:} Locate the *.exe installation package that you downloaded and run it. You should see something similar to the Fig.~\ref{install-1}. Click on \texttt{Next} to proceed.
+% figvs takes 4 parameters (see the style sheet for source code)
+%   1) Image width (w.r.t. column)
+%   2) Image file name and label
+%   3) Other 'includegraphics' parameters
+%   4) Caption
+\figvs{0.4}{install-1}{trim=0cm 0cm 0cm 0cm,clip}{Launching the VirtualBox Setup Wizard.}
+
+\textbf{Step 2:} In the custom setup options, Fig.~\ref{install-2}, keep the default settings (i.e. install everything). Click on \texttt{Next} to proceed.
+\figvs{0.4}{install-2}{trim=0cm 0cm 0cm 0cm,clip}{VirtualBox custom setup options.}
+
+\textbf{Step 3:} Of the various options shown in Fig.~\ref{install-3}, you should register the file associations such that VirtualBox can recognize VM-related file extensions. If you prefer not to create shortcuts and start menu entries, you may skip the first three items.
+\figvs{0.4}{install-3}{trim=0cm 0cm 0cm 0cm,clip}{VirtualBox shortcuts and file associations.}
+
+\textbf{Step 4:} In order for your VM to have access to the Internet (which is required for this course), you need to install the VirtualBox networking features. Click on \texttt{Yes} in the dialog shown in Fig.~\ref{install-4}.
+
+\warn{This step may temporarily reset your network connection. If you're in the middle of an important connection (e.g. file download, video conferencing, etc.), wait until you're finished before proceeding with the installation}
+\figvs{0.4}{install-4}{trim=0cm 0cm 0cm 0cm,clip}{VirtualBox networking interfaces must be installed.}
+
+\textbf{Step 5:} Now you're ready to proceed with the installation. Click on \texttt{Install}.
+\figvs{0.4}{install-5}{trim=0cm 0cm 0cm 0cm,clip}{Confirm to begin installation.}
+
+\textbf{Step 6:} The installation process may prompt you to install the Oracle Corporation Universal Serial Bus (USB) package, as seen in Fig.~\ref{install-6}. This enables your VM to connect to USB devices on your physical computer. This is highly recommended as you may occasionally wish to connect a USB device to your VM (e.g. a flash drive if the networking fails, or a mouse). Click on \texttt{Install} to proceed.
+\figvs{0.4}{install-6}{trim=0cm 0cm 0cm 0cm,clip}{Confirm installation of the Oracle Universal Serial Bus package.}
+
+\textbf{Step 7:} When the installation has finished, you should see something similar to Fig.~\ref{install-7}. Click \texttt{Finish} to complete the process and launch VirtualBox.
+\figvs{0.4}{install-7}{trim=0cm 0cm 0cm 0cm,clip}{Finished installation.}
+
+\textbf{Step 8:} When VirtualBox launches, you should see the VirtualBox Manager, similar to that shown in Fig.~\ref{install-8}.
+\figvs{0.4}{install-8}{trim=0cm 0cm 0cm 0cm,clip}{VirtualBox Manager interface.}
+
+Proceed to section~\ref{sec:setup-vm} to download and setup the course VM.
+
+
+\subsection{Installation (OS X)}
+\label{subsec:install-osx}
+\textbf{TODO}
+
+% figvs takes 4 parameters (see the style sheet for source code)
+%   1) Image width (w.r.t. column)
+%   2) Image file name
+%   3) Other 'includegraphics' parameters
+%   4) Caption
+%\figvs{0.4}{spock}{trim=0cm 0cm 0cm 0cm,clip}{Spock from Amok Time. First aired Sept. 15th 1967.}
+
+%-------------------------------------------------------------------------------------------------
+\section{Setting up the Course VM}
+\label{sec:setup-vm}
+%-------------------------------------------------------------------------------------------------
+Now that you have VirtualBox installed, you can download the course VM image and run it. The VM image can be downloaded from: \url{https://drive.google.com/open?id=1Q2jUz-9mt8VMhA0pQKRe79fbcGT-MII-}. Once you've downloaded it, un-tar it to extract the \texttt{ece361.vdi} file within. The *.vdi extension format indicates this is a Virtual Disk Image.
+
+\textbf{Step 1:} In the VirtualBox Manager, click on \texttt{New} as highlighted in Fig.~\ref{vm-1}.
+\figvs{0.4}{vm-1}{trim=0cm 0cm 0cm 0cm,clip}{Create a new VM in the VirtualBox Manager.}
+
+\textbf{Step 2:} Click on \texttt{Expert Mode}, highlighted in Fig.~\ref{vm-2}, to see more configuration options.
+\figvs{0.4}{vm-2}{trim=0cm 0cm 0cm 0cm,clip}{Enabled Expert Mode.}
+
+\textbf{Step 3:} Provide your VM with a name (e.g. \texttt{ece361}). Specify \texttt{Linux} as the type, using \texttt{Ubuntu (64-bit)} as the version. For the memory size, 2048 MB (2 GB) is the minimum recommended amount to allocate to your VM. 
+\point{If you only see 32-bit options, please see the Troubleshooting (section~\ref{sec:troubleshooting}) below.}
+\figvs{0.4}{vm-3}{trim=0cm 0cm 0cm 0cm,clip}{VM configuration options.}
+
+\textbf{Step 4:} Select \texttt{Use an existing virtual hard disk file} and click on the small folder icon in the bottom right, as shown in Fig.~\ref{vm-4}. This will open up the Hard Disk Selector.
+\figvs{0.4}{vm-4}{trim=0cm 0cm 0cm 0cm,clip}{Specify that you will use an existing virtual hard disk.}
+
+\textbf{Step 5:} In thie Hard Disk Selector, click on \texttt{Add} as shown in Fig.~\ref{vm-5}. Browse to where you extracted \texttt{ece361.vdi}, and select it, then confirm by clicking on \texttt{Choose}.
+\figvs{0.4}{vm-5}{trim=0cm 0cm 0cm 0cm,clip}{VirtualBox Hard Disk Selector.}
+
+\textbf{Step 6:} Finally, click on \texttt{Create} to create the VM. Note that this does not run the VM yet.
+\figvs{0.4}{vm-6}{trim=0cm 0cm 0cm 0cm,clip}{Create the VM.}
+
+
+%-------------------------------------------------------------------------------------------------
+\section{Troubleshooting}
+\label{sec:troubleshooting}
+%-------------------------------------------------------------------------------------------------
+\textbf{TODO}
+
+\end{document}
