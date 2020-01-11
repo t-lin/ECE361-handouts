@@ -25,9 +25,9 @@
 %-------------------------------------------------------------------------------------------------
 The labs in this course will be conducted using a Linux-based virtual machine (VM) that we will provide you. A VM is a computer that is emulated using software. This allows users to run any computer system over another underlying computer system (e.g. you can run a Windows VM in an underlying Linux computer). To run VMs, you will need a hypervisor, a software that enables multiple VMs to coexist on the same computer.
 
-In this course, you will use VirtualBox~\footnote{VirtualBox: https://www.virtualbox.org/} as the hypervisor. VirtualBox is free and available for Windows, OS X, and Linux. The purpose of this setup guide is to walk you through how to install VirtualBox on your computer, and how to set up the course VM.
+In this course, you will use VirtualBox~\footnote{VirtualBox: https://www.virtualbox.org/} as the hypervisor. VirtualBox is free and available for Windows, macOS, and Linux. The purpose of this setup guide is to walk you through how to install VirtualBox on your computer, and how to set up the course VM.
 
-% These labs will be conducted using a virtual machine (VM) which we will provide you. To run this VM, you will need to download and install a software called VirtualBox (available for Windows, OS X, and Linux) on your personal computer. See the VirtualBox Setup Guide handout for details on how to install and set up the VM.
+% These labs will be conducted using a virtual machine (VM) which we will provide you. To run this VM, you will need to download and install a software called VirtualBox (available for Windows, macOS, and Linux) on your personal computer. See the VirtualBox Setup Guide handout for details on how to install and set up the VM.
 
 %If you have trouble getting the VM to work, please either bring your laptop to the first lab session  and ask a TA for help (preferred), or make a post detailing the problem on the discussion board. If neither you nor your partner own a computer capable of running the VM, please let the head TA know, and you will be provided with a cloud-based VM which you can access via VNC.
 
@@ -39,7 +39,7 @@ In this course, you will use VirtualBox~\footnote{VirtualBox: https://www.virtua
 %-------------------------------------------------------------------------------------------------
 Download and save the appropriate installation package for your platform. To download VirtualBox, please visit: \url{https://www.virtualbox.org/wiki/Downloads}
 
-This section will walk you through the installation process. Please go to section~\ref{subsec:install-windows} if you use Windows, or section~\ref{subsec:install-osx} if you use OS X.
+This section will walk you through the installation process. Please go to section~\ref{subsec:install-windows} if you use Windows, or section~\ref{subsec:install-osx} if you use macOS.
 
 %\work{You can use this box to highlight a specific work item.}
 
@@ -49,7 +49,7 @@ This section will walk you through the installation process. Please go to sectio
 \label{subsec:install-windows}
 %-------------------------------------------------------------------------------------------------
 %\hint{If you want to stress a hint for students, you can use this box.}
-This section will walk you through an installation of VirtualBox version \textbf{6.1.0} on a Windows. Other versions should have a similar process, though the following figures below may not exactly match.
+This section will walk you through an installation of VirtualBox version \textbf{6.1.0} on \textbf{Windows 10}. Other versions of VirtualBox should have a similar process, though the following figures below may not exactly match.
 
 \textbf{Step 1:} Locate the *.exe installation package that you downloaded and run it. You should see something similar to the Fig.~\ref{install-1}. Click on \texttt{Next} to proceed.
 % figvs takes 4 parameters (see the style sheet for source code)
@@ -82,12 +82,29 @@ This section will walk you through an installation of VirtualBox version \textbf
 \textbf{Step 8:} When VirtualBox launches, you should see the VirtualBox Manager, similar to that shown in Fig.~\ref{install-8}.
 \figvs{0.4}{install-8}{trim=0cm 0cm 0cm 0cm,clip}{VirtualBox Manager interface.}
 
-Proceed to section~\ref{sec:setup-vm} to download and setup the course VM.
+Proceed to section~\ref{sec:setup-vm} to download and set up the course VM.
 
 
-\subsection{Installation (OS X)}
+\subsection{Installation (macOS)}
 \label{subsec:install-osx}
-\textbf{TODO}
+This section will walk you through an installation of VirtualBox version \textbf{6.1.0} on \textbf{macOS Catalina}. Other versions should have a similar process, though the following figures below may not exactly match.
+
+\textbf{Step 1:} Locate the *.dmg installation package that you downloaded and run it. You should see something similar to the Fig.~\ref{mac-install-1}. Click on \texttt{Continue} to proceed.
+\figvs{0.4}{mac-install-1}{trim=0cm 0cm 0cm 0cm,clip}{VirtualBox Manager interface.}
+
+\textbf{Step 2:} Click \texttt{Install} on the next screen. The installer may prompt you to enter your computer's user name and password, as seen in Fig.~\ref{mac-install-2}; please do so, as this is perfectly safe.
+\figvs{0.4}{mac-install-2}{trim=0cm 0cm 0cm 0cm,clip}{VirtualBox Manager interface.}
+
+If the installation fails with the message shown in Fig.~\ref{mac-install-2a}, then you will have to modify the Security \& Privacy settings on your computer.
+\figvs{0.4}{mac-install-2a}{trim=0cm 0cm 0cm 0cm,clip}{VirtualBox Manager interface.}
+
+Go to your computer's Security \& Privacy settings and click on \texttt{Allow}, as seen in Fig.~\ref{mac-install-2b}. Afterwards, you'll have to re-run the installation package.
+\figvs{0.4}{mac-install-2b}{trim=0cm 0cm 0cm 0cm,clip}{VirtualBox Manager interface.}
+
+\textbf{Step 3:} If all goes well, you should see something similar to Fig.~\ref{mac-install-3}. Click on \texttt{Close} to finish.
+\figvs{0.4}{mac-install-3}{trim=0cm 0cm 0cm 0cm,clip}{VirtualBox Manager interface.}
+
+You're now ready to download and set up the course VM.
 
 % figvs takes 4 parameters (see the style sheet for source code)
 %   1) Image width (w.r.t. column)
@@ -100,7 +117,10 @@ Proceed to section~\ref{sec:setup-vm} to download and setup the course VM.
 \section{Setting up the Course VM}
 \label{sec:setup-vm}
 %-------------------------------------------------------------------------------------------------
-Now that you have VirtualBox installed, you can download the course VM image and run it. The VM image can be downloaded from: \url{https://drive.google.com/open?id=1Q2jUz-9mt8VMhA0pQKRe79fbcGT-MII-}. Once you've downloaded it, un-tar it to extract the \texttt{ece361.vdi} file within. The *.vdi extension format indicates this is a Virtual Disk Image.
+Now that you have VirtualBox installed, you can download the course VM image and run it. The VM image can be downloaded from:\\
+\url{https://drive.google.com/open?id=1Q2jUz-9mt8VMhA0pQKRe79fbcGT-MII-}
+
+\noindent Once you've downloaded it, un-tar it to extract the \texttt{ece361.vdi} file within. The *.vdi extension format indicates this is a Virtual Disk Image.
 
 \textbf{Step 1:} In the VirtualBox Manager, click on \texttt{New} as highlighted in Fig.~\ref{vm-1}.
 \figvs{0.4}{vm-1}{trim=0cm 0cm 0cm 0cm,clip}{Create a new VM in the VirtualBox Manager.}
