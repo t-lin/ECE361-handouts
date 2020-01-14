@@ -170,6 +170,7 @@ Once logged in, you should see the desktop, similar to Fig.~\ref{vm-start-3}. If
 \figvs{0.4}{vm-start-3}{trim=0cm 0cm 0cm 0cm,clip}{Desktop of the course VM.}
 
 
+\newpage
 %-------------------------------------------------------------------------------------------------
 \section{Troubleshooting}
 \label{sec:troubleshooting}
@@ -177,10 +178,36 @@ Once logged in, you should see the desktop, similar to Fig.~\ref{vm-start-3}. If
 This section provides troubleshooting for common issues. If you're facing a problem that is not listed here, please make a post on Piazza, or bring your laptop to the lab. Common problems and their solutions will be added here in the future.
 
 %-------------------------------------------------------------------------------------------------
+\subsection{VM's Screen Size Too Small or Cannot Scale}
+%-------------------------------------------------------------------------------------------------
+You will need to first install the VirtualBox Guest Additions \textit{into the VM itself}, then adjust the VM's monitor settings.
+
+\textbf{Step 1:} Insert VirtualBox's Guest Additions CD image into the VM, as seen in Fig.~\ref{tshoot-guest-ext-1}. When it asks to open it in the File Manager, click \texttt{OK}.
+\figvs{0.4}{tshoot-guest-ext-1}{trim=0cm 0cm 0cm 0cm,clip}{Insert the GuestAdditions CD image.}
+
+\textbf{Step 2:} Double-click on \texttt{autorun.sh}. In the resulting options, select \texttt{Execute}. This process may take up to a minute before it finishes.
+\figvs{0.4}{tshoot-guest-ext-2}{trim=0cm 0cm 0cm 0cm,clip}{Execute the installation process.}
+
+\textbf{Step 3:} Reboot the VM.
+
+\textbf{Step 4:} Once the VM has been rebooted and you've logged back in, select \texttt{Scaled Mode}, as seen in Fig~\ref{tshoot-scale-1}. 
+\figvs{0.4}{tshoot-scale-1}{trim=0cm 0cm 0cm 0cm,clip}{Enable Scaled Mode.}
+
+\textbf{Step 5:} Find the VM's monitor settings, and adjust the resolution as you see fit.
+\figvs{0.4}{tshoot-scale-2}{trim=0cm 0cm 0cm 0cm,clip}{Adjust the Monitor Settings.}
+
+
+%-------------------------------------------------------------------------------------------------
 \subsection{VERR\_NEM\_VM\_CREATE\_FAILED Error}
 %-------------------------------------------------------------------------------------------------
-If you see an error similar to Fig.~\ref{tshoot-verr-nem-vm} in Windows 10, then you may need to disable a few services. VirtualBox currently does not work well alongside other virtualization technologies used by Windows. Please see \url{https://forums.virtualbox.org/viewtopic.php?p=450399#p450399} for a list of Windows feature you \textit{may} need to disable.
+If you see an error similar to Fig.~\ref{tshoot-verr-nem-vm} in Windows 10, then you may need to disable a few services. VirtualBox currently does not work well alongside other virtualization technologies and features used by Windows.
 \figvs{0.4}{tshoot-verr-nem-vm}{trim=0cm 0cm 0cm 0cm,clip}{VERR\_NEM\_VM\_CREATE\_FAILED Error}
+
+In the Windows start menu, search for \texttt{Turn Windows features on or off}. You can then enable/disable features, some of which may require you to restart your computer. Features known to interfere with VirtualBox \textbf{6.1.0} include: \texttt{Hyper-V}, \texttt{Virtual Machine Platform}, and \texttt{Windows Hypervisor Platform}.
+
+Please see \url{https://forums.virtualbox.org/viewtopic.php?p=450399#p450399} for a list of Windows feature you \textit{may} need to disable (you may not have all of them).
+
+\warn{If you use Windows Subsystem for Linux 2 (WSL 2), you may need to revert your Linux distribution back to WSL 1, since WSL 2 depends on \texttt{Virtual Machine Platform} which must be disabled. To check if your Linux distributions are using WSL 1 or 2, open a Windows command prompt, and type \texttt{wsl -l -v}. If any of them are using 2, you can revert them back to 1 by typing \texttt{wsl --set-version <Distro> 1}. This process may take a while for each distribution.}
 
 %-------------------------------------------------------------------------------------------------
 \subsection{Only 32-bit VM Versions Available}
