@@ -25,9 +25,9 @@
 %-------------------------------------------------------------------------------------------------
 The labs in this course will be conducted using a Linux-based virtual machine (VM) that we will provide you. A VM is a computer that is emulated using software. This allows users to run any computer system over another underlying computer system (e.g. you can run a Windows VM in an underlying Linux computer). To run VMs, you will need a hypervisor, a software that enables multiple VMs to coexist on the same computer.
 
-In this course, you will use VirtualBox~\footnote{VirtualBox: https://www.virtualbox.org/} as the hypervisor. VirtualBox is free and available for Windows, macOS, and Linux. The purpose of this setup guide is to walk you through how to install VirtualBox on your computer, and how to set up the course VM.
+In this course, you will use VirtualBox~\footnote{VirtualBox: https://www.virtualbox.org/} as the hypervisor. VirtualBox is free and available for Windows, macOS, and Linux. The purpose of this setup guide is to walk you through how to install VirtualBox on your computer, and how to setup the course VM.
 
-% These labs will be conducted using a virtual machine (VM) which we will provide you. To run this VM, you will need to download and install a software called VirtualBox (available for Windows, macOS, and Linux) on your personal computer. See the VirtualBox Setup Guide handout for details on how to install and set up the VM.
+% These labs will be conducted using a virtual machine (VM) which we will provide you. To run this VM, you will need to download and install a software called VirtualBox (available for Windows, macOS, and Linux) on your personal computer. See the VirtualBox Setup Guide handout for details on how to install and setup the VM.
 
 %If you have trouble getting the VM to work, please either bring your laptop to the first lab session  and ask a TA for help (preferred), or make a post detailing the problem on the discussion board. If neither you nor your partner own a computer capable of running the VM, please let the head TA know, and you will be provided with a cloud-based VM which you can access via VNC.
 
@@ -82,7 +82,7 @@ This section will walk you through an installation of VirtualBox version \textbf
 \textbf{Step 8:} When VirtualBox launches, you should see the VirtualBox Manager, similar to that shown in Fig.~\ref{install-8}.
 \figvs{0.4}{install-8}{trim=0cm 0cm 0cm 0cm,clip}{VirtualBox Manager interface.}
 
-Proceed to section~\ref{sec:setup-vm} to download and set up the course VM.
+Proceed to section~\ref{sec:setup-run-vm} to download, setup, and run the course VM.
 
 
 \subsection{Installation (macOS)}
@@ -98,13 +98,13 @@ This section will walk you through an installation of VirtualBox version \textbf
 If the installation fails with the message shown in Fig.~\ref{mac-install-2a}, then you will have to modify the Security \& Privacy settings on your computer.
 \figvs{0.4}{mac-install-2a}{trim=0cm 0cm 0cm 0cm,clip}{VirtualBox Manager interface.}
 
-Go to your computer's Security \& Privacy settings and click on \texttt{Allow}, as seen in Fig.~\ref{mac-install-2b}. Afterwards, you'll have to re-run the installation package.
+Go to your computer's Security \& Privacy settings. Click the lock button at the bottom-left corner and enter your password. Click on \texttt{Allow}, as seen in Fig.~\ref{mac-install-2b}. Afterwards, you'll have to re-run the installation package.
 \figvs{0.4}{mac-install-2b}{trim=0cm 0cm 0cm 0cm,clip}{VirtualBox Manager interface.}
 
 \textbf{Step 3:} If all goes well, you should see something similar to Fig.~\ref{mac-install-3}. Click on \texttt{Close} to finish.
 \figvs{0.4}{mac-install-3}{trim=0cm 0cm 0cm 0cm,clip}{VirtualBox Manager interface.}
 
-You're now ready to download and set up the course VM.
+You're now ready to download, setup, and run the course VM.
 
 % figvs takes 4 parameters (see the style sheet for source code)
 %   1) Image width (w.r.t. column)
@@ -114,32 +114,60 @@ You're now ready to download and set up the course VM.
 %\figvs{0.4}{spock}{trim=0cm 0cm 0cm 0cm,clip}{Spock from Amok Time. First aired Sept. 15th 1967.}
 
 %-------------------------------------------------------------------------------------------------
-\section{Setting up the Course VM}
-\label{sec:setup-vm}
+\section{Setup and Running the Course VM}
+\label{sec:setup-run-vm}
 %-------------------------------------------------------------------------------------------------
-Now that you have VirtualBox installed, you can download the course VM image and run it. The VM image can be downloaded from:\\
+Now that you have VirtualBox installed, you can setup and run VMs on your computer. 
+
+%-------------------------------------------------------------------------------------------------
+\subsection{Setup the Course VM with VirtualBox}
+\label{subsec:setup-vm}
+%-------------------------------------------------------------------------------------------------
+In this section, you will download and and setup the course VM.
+
+\textbf{Step 1:} Download the course VM image from:\\
 \url{https://drive.google.com/open?id=1Q2jUz-9mt8VMhA0pQKRe79fbcGT-MII-}
 
 \noindent Once you've downloaded it, un-tar it to extract the \texttt{ece361.vdi} file within. The *.vdi extension format indicates this is a Virtual Disk Image.
 
-\textbf{Step 1:} In the VirtualBox Manager, click on \texttt{New} as highlighted in Fig.~\ref{vm-1}.
+\textbf{Step 2:} Start VirtualBox. In the VirtualBox Manager, click on \texttt{New} as highlighted in Fig.~\ref{vm-1}.
 \figvs{0.4}{vm-1}{trim=0cm 0cm 0cm 0cm,clip}{Create a new VM in the VirtualBox Manager.}
 
-\textbf{Step 2:} Click on \texttt{Expert Mode}, highlighted in Fig.~\ref{vm-2}, to see more configuration options.
+\textbf{Step 3:} Click on \texttt{Expert Mode}, highlighted in Fig.~\ref{vm-2}, to see more configuration options.
 \figvs{0.4}{vm-2}{trim=0cm 0cm 0cm 0cm,clip}{Enabled Expert Mode.}
 
-\textbf{Step 3:} Provide your VM with a name (e.g. \texttt{ece361}). Specify \texttt{Linux} as the type, using \texttt{Ubuntu (64-bit)} as the version. For the memory size, 2048 MB (2 GB) is the minimum recommended amount to allocate to your VM. 
+\textbf{Step 4:} Provide your VM with a name (e.g. \texttt{ece361}). Specify \texttt{Linux} as the type, using \texttt{Ubuntu (64-bit)} as the version. For the memory size, 2048 MB (2 GB) is the minimum recommended amount to allocate to your VM.
 \point{If you only see 32-bit options, please see the Troubleshooting (section~\ref{sec:troubleshooting}) below.}
 \figvs{0.4}{vm-3}{trim=0cm 0cm 0cm 0cm,clip}{VM configuration options.}
 
-\textbf{Step 4:} Select \texttt{Use an existing virtual hard disk file} and click on the small folder icon in the bottom right, as shown in Fig.~\ref{vm-4}. This will open up the Hard Disk Selector.
+\textbf{Step 5:} Select \texttt{Use an existing virtual hard disk file} and click on the small folder icon in the bottom right, as shown in Fig.~\ref{vm-4}. This will open up the Hard Disk Selector.
 \figvs{0.4}{vm-4}{trim=0cm 0cm 0cm 0cm,clip}{Specify that you will use an existing virtual hard disk.}
 
-\textbf{Step 5:} In thie Hard Disk Selector, click on \texttt{Add} as shown in Fig.~\ref{vm-5}. Browse to where you extracted \texttt{ece361.vdi}, and select it, then confirm by clicking on \texttt{Choose}.
+\textbf{Step 6:} In the Hard Disk Selector, click on \texttt{Add} as shown in Fig.~\ref{vm-5}. Browse to where you extracted \texttt{ece361.vdi}, and select it, then confirm by clicking on \texttt{Choose}.
 \figvs{0.4}{vm-5}{trim=0cm 0cm 0cm 0cm,clip}{VirtualBox Hard Disk Selector.}
 
-\textbf{Step 6:} Finally, click on \texttt{Create} to create the VM. Note that this does not run the VM yet.
+\textbf{Step 7:} Finally, click on \texttt{Create} to create the VM. Note that this does not run the VM yet.
 \figvs{0.4}{vm-6}{trim=0cm 0cm 0cm 0cm,clip}{Create the VM.}
+
+\textbf{Step 8:} Before you run the VM, modify the VM's settings to allocate more CPUs to it. Click on \texttt{Settings} as shown in Fig.~\ref{vm-7}.
+\figvs{0.4}{vm-7}{trim=0cm 0cm 0cm 0cm,clip}{Modifying the VM's settings.}
+
+Select \texttt{System} on the left, followed by \texttt{Processor} on the right (see Fig~\ref{vm-8}, and adjust the number of CPUs allocated. A minimum of 2 is required, but more is better (e.g. 4 would be optimal). Press \texttt{OK} when finished.
+\figvs{0.4}{vm-8}{trim=0cm 0cm 0cm 0cm,clip}{Adjusting the VM's allocation of CPUs.}
+
+%-------------------------------------------------------------------------------------------------
+\subsection{Running the Course VM}
+\label{subsec:run-vm}
+%-------------------------------------------------------------------------------------------------
+Now that you've created a VM with VirtualBox using the disk image provided, you can start the VM. In the VirtualBox Manager, click the \texttt{Start} button with the green arrow, as shown in Fig.~\ref{vm-start-1}.
+\figvs{0.4}{vm-start-1}{trim=0cm 0cm 0cm 0cm,clip}{Start the virtual machine.}
+
+After a while, you should see the graphical login page, Fig~\ref{vm-start-2}. You can log into the default account, named \textbf{\texttt{ubuntu}}, using the password \textbf{\texttt{ece361}}.
+\figvs{0.4}{vm-start-2}{trim=0cm 0cm 0cm 0cm,clip}{Login page of the course VM.}
+
+Once logged in, you should see the desktop, similar to Fig.~\ref{vm-start-3}. If this is the first time running the VM, update it now!
+\work{Update the VM: Open a terminal (in the VM), and type \texttt{ece361-update}}
+\figvs{0.4}{vm-start-3}{trim=0cm 0cm 0cm 0cm,clip}{Desktop of the course VM.}
 
 
 %-------------------------------------------------------------------------------------------------
