@@ -174,6 +174,21 @@ Once logged in, you should see the desktop, similar to Fig.~\ref{vm-start-3}. If
 \section{Troubleshooting}
 \label{sec:troubleshooting}
 %-------------------------------------------------------------------------------------------------
-\textbf{TODO}
+This section provides troubleshooting for common issues. If you're facing a problem that is not listed here, please make a post on Piazza, or bring your laptop to the lab. Common problems and their solutions will be added here in the future.
+
+%-------------------------------------------------------------------------------------------------
+\subsection{VERR\_NEM\_VM\_CREATE\_FAILED Error}
+%-------------------------------------------------------------------------------------------------
+If you see an error similar to Fig.~\ref{tshoot-verr-nem-vm} in Windows 10, then you may need to disable a few services. VirtualBox currently does not work well alongside other virtualization technologies used by Windows. Please see \url{https://forums.virtualbox.org/viewtopic.php?p=450399#p450399} for a list of Windows feature you \textit{may} need to disable.
+\figvs{0.4}{tshoot-verr-nem-vm}{trim=0cm 0cm 0cm 0cm,clip}{VERR\_NEM\_VM\_CREATE\_FAILED Error}
+
+%-------------------------------------------------------------------------------------------------
+\subsection{Only 32-bit VM Versions Available}
+%-------------------------------------------------------------------------------------------------
+Possible causes of this issue include:
+\begin{itemize}
+    \item \textbf{Your CPU's virtualization feature is disabled.} To enable, you must go into your computer's BIOS (this varies across computers) and enable virtualization. For Intel CPUs, the feature is called \texttt{Intel Virtualization (VT-x)} and it must be enabled, as well as \texttt{VT-d} if it exists. For AMD CPUs, the feature is called \texttt{AMD Virtualization (AMD-V)}.
+    \item \textbf{Windows 10's Memory Integrity feature is on.} This is a relatively new security feature in Windows to protect the kernel's memory. However, it uses Windows virtualization features to do so, which currently does not work well with VirtualBox. In the Windows start menu, search for \texttt{Core Isolation}. If \texttt{Memory Integrity} is on, turn it off.
+\end{itemize}
 
 \end{document}
