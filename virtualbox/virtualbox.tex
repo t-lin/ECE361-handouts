@@ -97,7 +97,7 @@ You're now ready to download, setup, and run the course VM.
 \section{Setup and Running the Course VM}
 \label{sec:setup-run-vm}
 %-------------------------------------------------------------------------------------------------
-Now that you have VirtualBox installed, you can setup and run VMs on your computer. 
+Now that you have VirtualBox installed, you can setup and run VMs on your computer. See section~\ref{subsec:setup-vm} for steps on how to setup the course VM with VirtualBox, see section~\ref{subsec:run-vm} for running the VM, and see section~\ref{subsec:update-init-vm} for instructions on updating and initializing the VM.
 
 %-------------------------------------------------------------------------------------------------
 \subsection{Setup the Course VM with VirtualBox}
@@ -145,9 +145,20 @@ Now that you've created a VM with VirtualBox using the disk image provided, you 
 After a while, you should see the graphical login page, Fig~\ref{vm-start-2}. You can log into the default account, named \textbf{\texttt{ubuntu}}, using the password \textbf{\texttt{ece361}}.
 \figvs{0.6}{vm-start-2}{trim=0cm 0cm 0cm 0cm,clip}{Login page of the course VM.}
 
-Once logged in, you should see the desktop, similar to Fig.~\ref{vm-start-3}. If this is the first time running the VM, update it now!
-\work{Update the VM: Open a terminal (in the VM), and type \texttt{ece361-update}}
+Once logged in, you should see the desktop, similar to Fig.~\ref{vm-start-3}. If the VM's screen size is too small and you're unable to scale it, please see the troubleshooting steps in section~\ref{subsec:tshoot-screen-size}.
 \figvs{0.6}{vm-start-3}{trim=0cm 0cm 0cm 0cm,clip}{Desktop of the course VM.}
+
+%-------------------------------------------------------------------------------------------------
+\subsection{Update and Initialize the Course VM}
+\label{subsec:update-init-vm}
+%-------------------------------------------------------------------------------------------------
+Occasionally, the VM may need to be updated to fix bugs or introduce new features. We have provided an update script to ease this process, so you won't have to re-download the VM image for every update. If this is the first time running the VM, you should update it immediately.
+\work{Update the VM: Open a terminal (in the VM), and type \texttt{ece361-update}}
+
+The exercise and submission processes in ths course require access to the UG EECG system using your credentials. To avoid having to repeatedly type in your username and password, a key can be generated to associate this VM with your UG EECG account. Using a key means that this VM will have passwordless access to your UG EECG account, you just have to provide your credentials once.
+\work{To generate a key to associate this VM with your UG EECG account, open a terminal (in the VM), and type \texttt{ece361-init}}
+
+If you change your mind about using the key, you can always re-run \texttt{ece361-init} later. Choosing \texttt{no} will remove any previous keys, and choosing \texttt{yes} will generate a new key.
 
 
 \newpage
@@ -159,6 +170,7 @@ This section provides troubleshooting for common issues. If you're facing a prob
 
 %-------------------------------------------------------------------------------------------------
 \subsection{VM's Screen Size Too Small or Cannot Scale}
+\label{subsec:tshoot-screen-size}
 %-------------------------------------------------------------------------------------------------
 You will need to first install the VirtualBox Guest Additions \textit{into the VM itself}, then adjust the VM's monitor settings.
 
