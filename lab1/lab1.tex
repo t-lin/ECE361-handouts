@@ -41,8 +41,8 @@ This lab includes starter code that uses a custom-built Python 3 library called 
 
 \hint{It's highly recommended to update your VM before starting each lab. Open a terminal (in the VM), and type \texttt{ece361-update}}
 
-To run the initialization script for lab 1, open a terminal and type: \texttt{ece361-init}. You should see something similar to listing~\ref{lst:init-example}.
-\begin{lstlisting}[style=ece361shell, caption={Initializing lab 1}, label={lst:init-example}]
+To run the initialization script for lab \thelab, open a terminal and type \texttt{ece361-lab-init \thelab}. You should see something similar to listing~\ref{lst:init-example}.
+\begin{lstlisting}[style=ece361shell, caption={Initializing lab \thelab}, label={lst:init-example}]
 ubuntu@ece361:~$ ece361-lab-init 1
 Finding available UG EECG host...
 Warning: Permanently added 'ug251.eecg.utoronto.ca,128.100.13.251' (ECDSA) to the list of known hosts.
@@ -214,15 +214,30 @@ The following images demonstrate an example output after a successful execution 
 
 %-------------------------------------------------------------------------------------------------
 \section{Exerciser}
-\label{sec:exercise}
+\label{sec:exerciser}
 %-------------------------------------------------------------------------------------------------
-\textbf{TODO}
+You can use the exerciser to help test the correctness of your implementation. The exerciser will run a set of public test cases against your code.
+Ensure you have the following files all within the same directory:
+\begin{itemize}
+    \item \textbf{sender.py}: Your completed sender code from section~\ref{subsec:obj1}.
+    \item \textbf{receiver.py}: Your completed receiver code from section~\ref{subsec:obj2}.
+    \item \textbf{student\_number.txt}: A text file containing the student number of \textbf{one person} in the group.
+\end{itemize}
+
+In terminal, browse to the directory containing the files and type \texttt{ece361-exercise \thelab}.
 
 %-------------------------------------------------------------------------------------------------
 \section{Submission}
 \label{sec:submission}
 %-------------------------------------------------------------------------------------------------
-\textbf{TODO}
+Once you are confident of your implementation, you can run the submission process (which will invoke the exerciser before submitting). Only one person in the group needs to submit.
+
+From the same directory as where you ran the exerciser, type \texttt{ece361-submit submit \thelab}.
+
+You can then verify the submission by typing \texttt{ece361-submit list \thelab}.
+
+At some point after the lab's due date, private test cases will be run against your submission to calculate your final mark.
+
 
 \newpage
 %-------------------------------------------------------------------------------------------------
@@ -257,7 +272,7 @@ If you use a student number to create a socket object, you must use it on every 
 After creating a socket object, the object allows you to use the following methods to build your applications. Please read each method's manual to learn more about the function they provide to you.
 
 %-------------------------------------------------------------------------------------------------
-\subsubsection{\texttt{Socket.\textbf{change\_source\_address(address, port)}}}
+\subsubsection{\texttt{Socket.change\_source\_address(address, port)}}
 %-------------------------------------------------------------------------------------------------
 This method allows you to change the socket address and port number. The format of the input arguments is:
 \begin{itemize}
@@ -281,7 +296,7 @@ Be advised that in the enhanced environment provided by the \texttt{ece361} libr
 \end{itemize}
 
 %-------------------------------------------------------------------------------------------------
-\subsubsection{\texttt{Socket.\textbf{sendto(application\_data, dst\_address, dst\_port)}}}
+\subsubsection{\texttt{Socket.sendto(application\_data, dst\_address, dst\_port)}}
 %-------------------------------------------------------------------------------------------------
 This method enables the application developers (students) to send data messages to destination endpoints. The type of the input parameters are as follows:
 \begin{itemize}
@@ -318,7 +333,7 @@ The new values can be used as the destination address on the \texttt{sendto()} m
 Please complete the track 1 modules to see various examples of how to use your knowledge about the \texttt{sendto()} method in building your own applications.
 
 %-------------------------------------------------------------------------------------------------
-\subsubsection{\texttt{Socket.\textbf{recvfrom()}}}
+\subsubsection{\texttt{Socket.recvfrom()}}
 %-------------------------------------------------------------------------------------------------
 This method can be used to obtain the data messages from the network. The \texttt{recvfrom()} method does not require any input arguments. If the method is used, it only receives the broadcast messages or the messages that are destined to this receiver.
 
@@ -339,7 +354,7 @@ print(b) # Message Data
 \end{lstlisting}
 
 %-------------------------------------------------------------------------------------------------
-\subsubsection{\texttt{Socket.\textbf{display\_last\_header()}}}
+\subsubsection{\texttt{Socket.display\_last\_header()}}
 %-------------------------------------------------------------------------------------------------
 This method can be used to show the header of the last sent message. When you use the \texttt{sendto()} method to send a message, the \texttt{sendto()} will create two data structures.
 \begin{enumerate}
@@ -368,7 +383,7 @@ my_socket.display_last_header()
 \end{lstlisting}
 
 %-------------------------------------------------------------------------------------------------
-\subsubsection{\texttt{Socket.\textbf{display\_last\_segment()}}}
+\subsubsection{\texttt{Socket.display\_last\_segment()}}
 %-------------------------------------------------------------------------------------------------
 The same as above, this method can be used to see the last segment's content.
 
