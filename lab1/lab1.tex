@@ -23,15 +23,23 @@
 \section{Introduction}
 \label{sec:introduction}
 %-------------------------------------------------------------------------------------------------
-A network address is a logical (e.g., IP address) or physical address (e.g., MAC address) that uniquely distinguishes a network node from other nodes on the network. It is usually a number that is assigned to any device or network interface card that seeks access to be part of the network. A network node such as a personal computer or a mobile phone may also have several applications that use the node's connection to communicate with one another across the network. To distinguish the applications data from one another, the operating system allows applications to use port numbers. Therefore, each applications data will be mapped to a port number as consecutively they all can share the same network address to communicate on the network. By analogy, we can assume an apartment building that each unit has its own unit number, but they all share the same geographical address on the map.
+A network address is a logical (e.g., IP address) or physical address (e.g., MAC address) that uniquely distinguishes a network node from other nodes on the network.
+It is usually a number that is assigned to any device or network interface card that seeks access to the network.
+A network node such as a personal computer or a mobile phone may also have several applications that use the node's connection to communicate with other applications across the network.
+To distinguish an application's data from other applications' data, the operating system allows applications to use port numbers.
+Therefore, each application's data will be mapped to a port number so they can simultaneously use the same address to communicate over the network.
+By analogy, each unit in an apartment building has its own unit number, but they all share the same building address.
 
-To use a port number, applications are required to use a socket. A socket is one endpoint of a two-way communication link which is bound to a port number so that the transport layer protocols can identify the application that the data is destined to. Throughout this lab, we first learn how to use a socket to transmit data across the network and then we use our knowledge to build a simple file transfer application. We also see how headers are used to carry the network addresses and enable the network to guide the data message to any destination nodes.
+To use a port number, applications are required to use a socket. A socket is one endpoint of a two-way communication link which is bound to a port number so that transport layer protocols can identify the application that the data is destined for.
+In this lab, you will first learn how to use a socket to transmit data across the network, and then you will use your knowledge to build a simple file transfer application.
+You will also see how headers are used to carry network addresses, which enable the network to direct data messages to their intended destination.
 
 %-------------------------------------------------------------------------------------------------
 \subsection{Lab Structure}
 \label{subsec:lab-structure}
 %-------------------------------------------------------------------------------------------------
-This lab consists of two important tracks. Each track has an important goal and a set of objectives that must be met to satisfy the track's goal. Please read the information below carefully and follow the steps that are involved to complete each goal and its objectives.
+This lab consists of two important tracks: a tutorial track and a challenge track. Each track has an important goal and a set of objectives that must be met.
+Please read the information below carefully and follow the steps that are involved to complete each goal and its objectives.
 
 %-------------------------------------------------------------------------------------------------
 \subsection{Lab Initialization}
@@ -55,157 +63,171 @@ Installing libraries...
 Done. Now run "source /home/ubuntu/lab1/sourceMe" to activate the virtual environment.
 \end{lstlisting}
 
-The initialization script creates a working directory for this lab, located at \texttt{~/lab1}. Within that directory, there is a file called \texttt{sourceMe} which is used to start the virtual environment. To activate the virtual environment, run the \texttt{source} command as shown in listing~\ref{lst:init-example}. You should see a \texttt{(.venv)} appear in your prompt, confirming the environment is activated.
+The initialization script creates a working directory for this lab, located at \texttt{\textasciitilde/lab1}.
+Within that directory, there is a file called \texttt{sourceMe} which is used to start the virtual environment.
+To activate the virtual environment, run the \texttt{source} command as shown in listing~\ref{lst:init-example}.
+You should see a \texttt{(.venv)} appear in your prompt, confirming the environment is activated.
 \point{You will need to activate the virtual environment \textbf{in each terminal} that runs code belonging to this lab.}
 
-You should also notice two sub-directories, named \texttt{track1} and \texttt{track2}. These provide tutorial and starter code for the work you will do in sections~\ref{sec:track1} and~\ref{sec:track2}, respectively.
+You should also notice two sub-directories under the working directory, named \texttt{track1} and \texttt{track2}. These provide the tutorial and starter code for the work you will do in sections~\ref{sec:track1} and~\ref{sec:track2}, respectively.
 
 
 %-------------------------------------------------------------------------------------------------
-\section{Track 1: Tutorial Material}
+\section{Track 1: Tutorial}
 \label{sec:track1}
 %-------------------------------------------------------------------------------------------------
-This is a tutorial track which explains the use of network addresses in guiding the applications data across the network. The goal of the track is to guide you on a step by step tutorial experiment that allows you to experience the importance of addressing as well as showing you how to work with the ece361 library. You do not need to write codes for this track. You only need to follow the steps to complete the track objectives. This track follows four important objectives which are designed in the form of individual modules. You and your team members must follow the steps included in each module to complete its objectives.
+This is a tutorial track which explains the use of network addresses in guiding an application's data across the network.
+The goal of the track is to guide you on a step by step tutorial that allows you to experience the importance of addressing as well as show you how to work with the \texttt{ece361} library.
+You do not need to write code for this track. You only need to follow the steps to complete the track objectives.
+This track contains four important objectives which are designed in the form of individual modules.
 
-\textbf{Note:}
-It is highly important to first read the appendix that explains the \texttt{ece361} library and the \texttt{Socket()} class before you continue with this track.
+\work{Before continuing, it is highly important to first read the appendix (Section~\ref{sec:appendix-ece361-lib}) that explains the \texttt{ece361} library and its \texttt{Socket()} class}
 
 %-------------------------------------------------------------------------------------------------
 \subsection{Module 1}
 \label{subsec:module1}
 %-------------------------------------------------------------------------------------------------
-This module's objective is to explain the use of broadcasting in exchanging data between several participating nodes. You will need three terminals with the virtual environment activated in each of them. Please, follow the steps below to see an example.
+This module's objective is to explain the use of broadcasting in exchanging data between several participating network nodes.
+You will need three terminals with the virtual environment activated in each of them. Please follow the steps below to see an example.
 \begin{enumerate}
-    \item Navigate to lab1/track1 directory and open module1 on all your three open terminals.
-    \item In each of the Python files provided, you need to replace the \texttt{<your\_student\_number>} with your student number for the following steps. This is very important as it may cause conflicts with other students experiments. If you are working in team of two or more, use only one of the team members student ID for all the modules.
-    \item You need to run an instance of the \texttt{receiver.py} and and instance of \texttt{receiver2.py} in two of the three open terminals. Run the instances by typing \texttt{python3 receiver.py} and \texttt{python3 receiver2.py} onto the command line of your terminals. Make sure to replace your student number on both files.
-    \item Run an instance of the \texttt{sender.py} by typing \texttt{python3 sender.py} onto the command line of your open terminal. Make sure to replace your student number.
-    \item Check if the receivers obtained the sender message and that the sender address is the same in both. You can find more information about the methods that are used in this module in the Appendix.
+    \item Navigate to the \texttt{\textasciitilde/lab1/track1} directory and open \texttt{module1} on all three terminals.
+    \item For each of the Python files provided, you need to replace \texttt{<your\_student\_number>} with your student number. This is very important as multiple groups using the same number may cause conflicts with each other's experiments. If you are working in team of two or more, use one of the team member's student number for all the modules.
+    \item You need to run an instance of \texttt{receiver.py} and an instance of \texttt{receiver2.py} in two of the three terminals. Run the instances by typing \texttt{python3 receiver.py} and \texttt{python3 receiver2.py} in your terminals. Make sure you have replaced your student number in both files.
+    \item In the third terminal, run an instance of \texttt{sender.py} by typing \texttt{python3 sender.py}. Make sure you have replaced your student number in the file.
+    \item Check if the receivers obtained the sender's message and that the sender address seen by both receivers is the same. You can find more information about the methods that are used in this module by examining the code and reading the appendix.
 \end{enumerate}
 
-\warn{You must make sure you run the receiver applications described in step 2 before you run the sender in step 3.}
+\warn{You must make sure you run the receiver applications described in step 3 before you run the sender in step 4.}
 
-\textbf{Note:}
 The \texttt{From:} displays the sender address of the broadcast message.
 It is in the form of a list where the first element indicates the sender's address on the network.
-It may be a random name that was chosen initially but, it is subject to change at any time.
+It may be a name that was randomly chosen, but it is subject to change at any time.
 Notice that the sender's address is the same in both receivers. That is an indicator that the same message is received by all the receivers.
-The second element of the list indicates the port number of the sender node.
-If you see "N/A" is shown in the list's second element, that is in indication that the port number is not specified on the source (sender) node.
-As you also understood, if a message is broadcasted to every node on the network, it does not need to include any information about the message destination.
-That's why the \texttt{sendto()} method only need the message as its only input argument for this module.
 
-\think{Do you think broadcasting is an efficient way to transmit data between the participant nodes on the network? Think about how scalable this approach can be if the number of participating nodes increases.}
+The second element of the list indicates the port identifier of the sender node.
+If "N/A" is shown as the list's second element, that is in indication that the port identifier was not specified by the source (sender) node.
+
+Note that if a message is broadcasted to every node on the network, it does not need to include any information about the message destination.
+That's why the \texttt{sendto()} method only requires the message as its only input argument for this module.
+
+\think{Do you think broadcasting is an efficient way to transmit data between the participant nodes on the network? Think about how scalable this approach can be as the number of participating nodes increases.}
 
 %-------------------------------------------------------------------------------------------------
 \subsection{Module 2}
 \label{subsec:module2}
 %-------------------------------------------------------------------------------------------------
-This module's objective is to introduce the notion of destination address in sending data to specific nodes on the network. As you also noticed, broadcasting does not scale when the number of nodes on the network increases. Therefore, by using the destination address the network can find the target node and delivers the data messages to that specific node instead of broadcasting the message to all the nodes on the network. Please, follow the steps below to see an example.
+This module's objective is to introduce the notion of a destination address when sending data to specific nodes on the network.
+A major drawback of broadcasting is that it does not scale when the number of nodes on the network increases. Therefore, by specifying the address of a destination node, the network can delivers data messages to that specific node, instead of broadcasting the messages to all the nodes on the network. Please follow the steps below to see an example.
 
-\warn{Please do not forget to replace the \texttt{<your\_student\_number>} with your own student number and to make sure that the lab virtual environment has been activated as specified in module 1.}
+\warn{Make sure that the lab virtual environment has been activated as specified in section~\ref{subsec:lab-init}.}
 
 \begin{enumerate}
-    \item Navigate to lab1/track1 directory and open module 2 on all the terminal instances that you need to use for this module.
-    \item Open your terminal and run an instance of the \texttt{receiver.py} by typing \texttt{python3 receiver.py} onto the command line of your open terminal.
-    \item Open another terminal and run an instance of the \texttt{receiver2.py} by typing \texttt{python3 receiver2.py} onto the command line of your open terminal.
-    \item Open another terminal and run an instance of the \texttt{sender.py} by typing \texttt{python3 sender.py} onto the command line of your open terminal.
+    \item Navigate to the \texttt{\textasciitilde/lab1/track1} directory and open \texttt{module2} on three terminals.
+    \item For each of the Python files provided, replace \texttt{<your\_student\_number>} with your student number.
+    \item In one terminal, run an instance of \texttt{receiver.py} by typing \texttt{python3 receiver.py}.
+    \item In another terminal, run an instance of \texttt{receiver2.py} by typing \texttt{python3 receiver2.py}.
+    \item In the last terminal, run an instance of \texttt{sender.py} by typing \texttt{python3 sender.py}.
 \end{enumerate}
 
-\warn{You must make sure you run the receiver applications described in step 2 before you run the sender in step 3.}
+\warn{You must make sure you run the receiver applications described in steps 3 and 4 before you run the sender in step 5.}
 
-\think{As you can see, each of the receiver nodes will only receive the message that is destined to itself. Now imagine that each node in the network will have several applications running on the same node. How can we provide a mechanism so that each applications data can be distinguished from other applications?}
+As you can see, each of the receiver nodes will only receive the message that is destined to it.
+If you haven't already done so, open the sender and receiver files and examine the differences between them and their counterparts from module 1.
+
+\think{Now imagine that each node in the network will have several applications running on the same node. How can we provide a mechanism so that each application's data can be distinguished from other applications?}
 
 
 %-------------------------------------------------------------------------------------------------
 \subsection{Module 3}
 \label{subsec:module3}
 %-------------------------------------------------------------------------------------------------
-This module objective is to introduce the notion of port numbers to distinguish several applications' data from each other and to allow them to use the node's network connection to communicate with each other across the network. Please, follow the steps below to see an example.
+This module's objective is to introduce the notion of port identifier to distinguish several applications' data from each other, and to allow them to simultaneously use the node's network address to communicate with each other applications across the network. Please follow the steps below to see an example.
 
-\warn{Please do not forget to replace the \texttt{<your\_student\_number>} with your own student number and to make sure that the lab virtual environment has been activated as specified in module 1.}
+\warn{Make sure that the lab virtual environment has been activated as specified in section~\ref{subsec:lab-init}.}
 
 \begin{enumerate}
-    \item Navigate to lab1/track1 directory and open module 3 on all the terminal instances that you need to use for this module.
-    \item Open a terminal and run an instance of the \texttt{receiver.py} by typing \texttt{python3 receiver.py} onto the command line of your open terminal.
-    \item Open another terminal and run an instance of the \texttt{receiver2.py} by typing \texttt{python3 receiver.py} onto the command line of your open terminal.
-    \item Open another terminal and run an instance of the \texttt{sender.py} by typing \texttt{python3 sender.py} onto the command line of your open terminal.
+    \item Navigate to the \texttt{\textasciitilde/lab1/track1} directory and open \texttt{module3} on three terminals.
+    \item For each of the Python files provided, replace \texttt{<your\_student\_number>} with your student number.
+    \item In one terminal, run an instance of \texttt{receiver.py} by typing \texttt{python3 receiver.py}.
+    \item In another terminal, run an instance of \texttt{receiver2.py} by typing \texttt{python3 receiver.py}.
+    \item In the last terminal, run an instance of \texttt{sender.py} by typing \texttt{python3 sender.py}.
 \end{enumerate}
 
-As you can see, both receivers share the same address but, use a different port number. Consequently, each receiver application only receives the data messages that is destined for it.
+As you can see, both receivers share the same address but they use different port identifiers.
+Consequently, each receiver application only receives the data messages that is destined for it.
 
-\think{Now, what if we need to communicate with the sender of the message. How can the receiver reply to the sender after it receives a message form it?}
+\think{What if an application needs to establish bi-directional communication with another application? How can the receiver reply to the sender after it receives a message from it?}
 
 
 %-------------------------------------------------------------------------------------------------
 \subsection{Module 4}
 \label{subsec:module4}
 %-------------------------------------------------------------------------------------------------
-This module objective is to introduce the notion of source address and how the receiver node can use this information to reply to the sender. Please, follow the steps below to see an example.
+This module's objective is to introduce the notion of source addresses, and how the receiver node can use this information to reply to the sender.
+Please follow the steps below to see an example.
 
-\warn{Please do not forget to replace the \texttt{<your\_student\_number>} with your own student number and to make sure that the lab virtual environment has been activated as specified in module 1.}
+\warn{Make sure that the lab virtual environment has been activated as specified in section~\ref{subsec:lab-init}.}
 
 \begin{enumerate}
-    \item Navigate to lab1/track1 directory and open module 4 on all the terminal instances that you need to use for this module.
-    \item Open a terminal and run an instance of the \texttt{receiver.py} by typing \texttt{python3 receiver.py} onto the command line of your open terminal.
-    \item Open another terminal and run an instance of the \texttt{sender.py} by typing \texttt{python3 sender.py} onto the command line of your open terminal.
+    \item Navigate to the \texttt{\textasciitilde/lab1/track1} directory and open \texttt{module4} on two terminals.
+    \item For each of the Python files provided, replace \texttt{<your\_student\_number>} with your student number.
+    \item In one terminal, run an instance of \texttt{receiver.py} by typing \texttt{python3 receiver.py}.
+    \item In another terminal, run an instance of \texttt{sender.py} by typing \texttt{python3 sender.py}.
 \end{enumerate}
 
-As you can see, the sender's node application uses a port number to transmits a message that carries \texttt{hi} to the destination node application that is bound to a specific port number. The receiver will also reply to that application by using the node address and the sender's application port number.
-
-\textbf{Note:}
-The receiver application can have access to the senders application port number and address via the \texttt{recvfrom()} method's return values. Please see the lab appendix for further information on how to use \texttt{recvfrom()} to write your own applications.
+As you can see, the sender node's application uses a port identifier to transmit a message that carries "\texttt{hi}" to the destination node application bound to a specific port identifier.
+The receiving application will reply to the source application by using the sender node's address and the sender's application port identifier.
+The receiver application can have access to the senders application port number and address via the \texttt{recvfrom()} method's return values.
+\hint{Please see the appendix for further information on how to use \texttt{recvfrom()} to write your own applications.}
 
 %-------------------------------------------------------------------------------------------------
 \section{Track 2: File Transfer}
 \label{sec:track2}
 %-------------------------------------------------------------------------------------------------
-After showing different forms of transmitting data messages across the network, this track's goal is to complete a programming challenge that allows a sender application to open and read a file and send it to a destination receiver application, where the file will be reassembled and written on the disk.
-To complete this assignment, you must navigate to lab1/track2 where the starter code is located.
+After showing different forms of transmitting data messages across the network, this track's goal is to complete a programming challenge that allows a sender application to open and read a file, and send the file's contents to a destination receiver application, where the file will be reassembled and written on the disk.
+To complete this assignment, you must navigate to the \texttt{\textasciitilde/lab1/track2} directory where the starter code is located.
 
-\textbf{Note:}
-The maximum amount of data that the sender can include in a message is 100 bytes. Therefore, the sender must divide the file into several file chunks of at most 100 bytes and then transfer them to the destination. The receiver will then receive each chunk and reassemble the file on the destination.
+\warn{The maximum amount of data that the sender can include in a message is 100 bytes. Therefore, the sender must divide the file into several chunks of at most 100 bytes, and transfer them one at a time to the destination. The receiver will then receive each chunk and reassemble the file.}
 
-\warn{Please do not forget to replace the \texttt{<your\_student\_number>} with your own student number and to make sure that the lab virtual environment has been activated as specified in module 1.}
+\warn{Please do not forget to replace the \texttt{<your\_student\_number>} with your own student number, and to make sure that the lab virtual environment has been activated as specified in section~\ref{subsec:lab-init}.}
 
 %-------------------------------------------------------------------------------------------------
 \subsection{Objective 1}
 \label{subsec:obj1}
 %-------------------------------------------------------------------------------------------------
-Writing the sender application by writing the incomplete parts of the \texttt{sender.py} source code. You need to complete the missing parts of the \texttt{send\_file()} function and replace the input arguments with your own data as indicated in the lines 56-60. Even though the source code is commented to guide you with your programming assignment, the following checkpoints are important to keep in mind.
+Write the sender application by filling in the incomplete parts of \texttt{sender.py}.
+You need to complete the missing parts of the \texttt{send\_file()} function and replace the input arguments with your own information.
+Even though the source code is commented to guide you, the following checkpoints are important to keep in mind.
 \begin{itemize}
     \item You can find the sender application in the \texttt{sender.py} file.
-    \item A text file named \texttt{iso.txt} is provided to you with the starter code. The \texttt{send\_file()} function must be able to open and read this file. Note that this is very important not to change the input argument for the \texttt{file\_name} on both the sender and receiver applications.
+    \item A text file named \texttt{iso.txt} is provided to you with the starter code. The \texttt{send\_file()} function must be able to open and read this file.
     \item The sender must first get the size of the \texttt{iso.txt} file and send that information to the receiver.
-    \item The receiver will then acknowledge the successful receipt of the file size by sending an "ACK" message. See the comments on the starter code on how to handle the acknowledgement messages.
-    \item Upon successful transmission of the file size, the sender reads chunks of the file and send them sequentially to the receiver, until it reads to whole file.
-    \item Each time the sender transmits a file chunk, the receiver must acknowledge the receipt of the message and sends back an acknowledgement to the sender. The sender can only transmit the next file chunk, if it receives an acknowledgement. See the comments on the starter code on how to handle the acknowledgement messages.
-    \item After a successful execution of the sender application (\texttt{sender.py}), the application displays the file size that was transmitted as well as the number of file chunks (segments) that were sent to the receiver application.
+    \item The receiver will then acknowledge the successful receipt of the file size by sending an "ACK" message. See the comments in the starter code on how to handle acknowledgement messages.
+    \item Upon successful transmission of the file size, the sender will read chunks of the file and send them sequentially to the receiver, until it reads to whole file.
+    \item Each time the sender transmits a file chunk, the receiver must acknowledge receipt of the message and send back an acknowledgement to the sender. The sender can only transmit the next file chunk when it receives an acknowledgement.
+    \item After a successful execution of the sender application (\texttt{sender.py}), the application displays the file size that was transmitted as well as the number of file chunks that were sent to the receiver application.
 \end{itemize}
 
-\warn{You must first run the receiver application and then run the sender to test your code. Otherwise, it may not be successful in receiving all the file chunks.}
+\warn{It is very important not to change the input argument for the \texttt{file\_name} on both the sender and receiver applications.}
 
 %-------------------------------------------------------------------------------------------------
 \subsection{Objective 2}
 \label{subsec:obj2}
 %-------------------------------------------------------------------------------------------------
-Writing the receiver's application by writing the incomplete parts of the \texttt{receiver.py} source code. You need to complete the missing parts of the \texttt{receive\_file()} function and replace the input arguments with your own data as specified in the lines 50-55. Even though the source code is commented to guide you with your programming assignment, the following checkpoints are important to keep in mind.
-
+Write the receiver's application by filling in the incomplete parts of \texttt{receiver.py}.
+You need to complete the missing parts of the \texttt{receive\_file()} function and replace the input arguments with your own information.
+Even though the source code is commented to guide you, the following checkpoints are important to keep in mind.
 \begin{itemize}
     \item You can find the receiver application in the \texttt{receiver.py} file.
-    \item The receiver will create a file named \texttt{iso\_copy.txt} and write the incoming chunks in this file. This file name is used as an input argument when you call the \texttt{receive\_from} function. Please do not alter this name as we are aiming that everybody can experience the same sequence of events.
-    \item The receiver is sending an acknowledgement message to the sender's application upon successful receipt of the file chunks. It also sends a "NACK" message which signals the sender to resend the same file chunk, if it wasn't successfully received. See the comments on the starter code on how to handle the acknowledgement messages.
-    \item The receiver must first receive the file size from the sender's application and use that information to know how much of the data is received at a time.
-    \item The receiver also uses this information to understand if the file transmission has been finished or not.
-    \item After successfully completing the starter-code, a successful execution of the receiver application (\texttt{receiver.py}) will write a file on the same directory which has the same size and content of the original file. The receiver application will also display the file size and the number of segments that has been received.
+    \item The receiver will create a file named \texttt{iso\_copy.txt} and write the incoming chunks to this file. This file name is used as an input argument when you call the \texttt{receive\_from} function. Please do not alter this name as we want everybody to see the same sequence of events.
+    \item The receiver is sending an acknowledgement message to the sender's application upon successful receipt of each file chunk. It also sends a "NACK" message which signals the sender to resend the same file chunk if it wasn't successfully received. See the comments in the starter code on how to handle the acknowledgement messages.
+    \item The receiver must first receive the file size from the sender's application and use that information to know how much data to expect, and more importantly, when the file transmission has finished.
+    \item After successfully completing the starter-code, a successful execution of the receiver application (\texttt{receiver.py}) will write a new file in the same directory as the original file. The new file should have the same size and content as the original file. The receiver application will also display the file size and the number of chunks that it received.
 \end{itemize}
 
-\warn{You must first run the receiver application and then run the sender to test your code. Otherwise, it may not be successful in receiving all the file chunks.}
+\warn{You must run the receiver application before running the sender application. Otherwise, it may not be successful in receiving all the file chunks.}
 
-\textbf{Note:}
-The resulting file size and the number of transmitted segments must be the same on both sender and receiver applications.
-
-\point{You may experience a small delay in the data transmission between the sender and receiver applications. If you see that, do not worry and do not stop your code. It is generally due to the fact that the network is shared between all the students and that may cause some delay. Please be patient as it will continue the transmission again.}
+\point{You may experience a small delay in the data transmission between the sender and receiver applications. If you see that, do not worry and do not stop your code. This is due to the fact that the network is shared between all the students, which may cause some delay. Please be patient as it will resume transmission.}
 
 The following images demonstrate an example output after a successful execution of the receiver and sender applications.
 \figvs{0.65}{t2-send-output}{trim=0cm 0cm 0cm 0cm,clip}{The output of the sender application (\texttt{sender.py})}
@@ -244,17 +266,19 @@ At some point after the lab's due date, private test cases will be run against y
 \section{Appendix A: The \texttt{ece361} Python Library}
 \label{sec:appendix-ece361-lib}
 %-------------------------------------------------------------------------------------------------
-The \texttt{ece361} library includes a networking package which implements an enhanced environment that allows the developers (students) to experiment various forms of end to end communication by using the network addresses. While the networking package offers the same programming features that you normally work within real production environments, it offers more flexibility to support the objectives followed by the course goals. As a result, you may need to seek for more information on network programming after you completed this lab assignment.
+The \texttt{ece361} library includes a networking package which implements an enhanced environment that allows the developers (students) to experiment with various forms of end-to-end communication by using network addresses. While the networking package offers the same programming features that you normally see within real production environments, it offers more flexibility to support the teaching objectives of the course. As a result, you may want to seek out more information on network programming after you have completed this lab assignment.
 
-The networking package offered by \texttt{ece361} library provides an important class called \texttt{Socket} which you will learn how to use its methods to create network applications in both track 1 and track 2 of this lab assignments. The following section will explain the \texttt{Socket} class and its methods in more details.
+The networking package offered by \texttt{ece361} library provides an important class called \texttt{Socket}.
+You will learn how to use its methods to create network applications in both track 1 and track 2 of this lab assignments.
+The following sections will explain the \texttt{Socket} class and its methods in more detail.
 
 %-------------------------------------------------------------------------------------------------
 \subsection{The \texttt{Socket} Class}
 \label{subsec:socket-class}
 %-------------------------------------------------------------------------------------------------
-A network socket is one endpoint of a two-way communication link. The endpoint can be created by a software application via a programming language library that provides the required features.
-Therefore, to enable an application to communicate over the network, the application developer must create a socket to build an endpoint.
-The endpoint can be used to send and receive data from the network. In this lab environment, you can easily build a socket by importing \texttt{ece361} networking package and create an object of the class \texttt{Socket}.
+A network socket is one endpoint of a two-way communication link. The endpoint can be created by a software application via an application programming interface (API) that provides the required features.
+Therefore, to enable an application to communicate over the network, the application developer must first create a socket to build an endpoint.
+The endpoint can be used to send and receive data from the network. In this lab environment, you can easily build a socket by importing the \texttt{ece361} networking package and create objects of class \texttt{Socket}.
 The following example demonstrates how you can do this. In addition, you can find informative examples by completing the track 1 tutorial modules.
 
 \begin{lstlisting}[caption={Importing the \texttt{Socket} class}, language=Python]
@@ -264,20 +288,18 @@ from ece361.netowrk.socket import Socket
 socket_object_name = Socket(<Your Student Number>)
 \end{lstlisting}
 
-The class socket in the lab1 environment requires you to provide your student number. This is due to the fact that the lab environment will create a personal and customized network for you which makes your data messages and experiments invisible to others. Therefore, it is of utmost importance to provide your student number correctly. Member of a team are required to use one of the team members student ID.
+The \texttt{Socket} class used in the lab environment requires you to provide your student number. This is due to the fact that the lab environment will create an isolated personal network for you, in which makes your data messages are invisible to others. Therefore, it is of utmost importance to provide your student number correctly. Students in a team are required to use one of the team members' student number.
+\point{If you use a particular student number to create a socket object, you must use the same number in every single instance of your socket objects to allow the endpoints to be part of the same network. For instance, if you have a sender and a receiver that need to exchange data with each other, they must both instantiate their socket objects using the same student number.}
 
-\textbf{Note:}
-If you use a student number to create a socket object, you must use it on every single instance of your socket objects to allow the endpoints to be part of the same network. For instance, if you have a sender and a receiver application that need to exchange data with each other, you need to create an instance of the socket object on both and provide the same student number as an input on both socket objects. This way, they belong to the same network. You can also see examples of this by completing the track 1 modules.
-
-After creating a socket object, the object allows you to use the following methods to build your applications. Please read each method's manual to learn more about the function they provide to you.
+After instantiating a socket object, you can use the following class methods to build your applications. Please read each method's manual to learn more about the function they provide.
 
 %-------------------------------------------------------------------------------------------------
 \subsubsection{\texttt{Socket.change\_source\_address(address, port)}}
 %-------------------------------------------------------------------------------------------------
-This method allows you to change the socket address and port number. The format of the input arguments is:
+This method allows you to change the socket address and port number. The input parameters are as follows:
 \begin{itemize}
-    \item \texttt{address}: An IP address or any name in the format of string characters.
-    \item \texttt{port}: A number or name in the format of string characters.
+    \item \textbf{address}: An IP address or any name in the format of string characters.
+    \item \textbf{port}: A number or name in the format of string characters.
 \end{itemize}
 
 \begin{lstlisting}[caption={Example for using \texttt{change\_source\_address()}}, language=Python]
@@ -288,17 +310,17 @@ my_socket.change_source_address(address='ece361', port='app1')
 \end{lstlisting}
 
 \textbf{Note:}
-Be advised that in the enhanced environment provided by the \texttt{ece361} library, when you create a socket object, it chooses a random address and port number as the source address. The initial port number is ‘N/A' which indicates the socket does not use any port number. Therefore, the following items are important to keep in mind.
+Be advised that in the enhanced environment provided by the \texttt{ece361} library, when you create a socket object, it chooses a random address and port number as the source address. The initial port number is 'N/A' which indicates the socket does not use any port number. Therefore, the following items are important to keep in mind.
 \begin{itemize}
-    \item If you created a socket, the best practice is to change the address and port numbers to your preferred ones to avoid confusion.
-    \item Both address and port numbers must be provided in the string characters format. Please see the examples.
-    \item The flexibility that you have to use a socket without specifying a port number is due to the specific lab environment characteristics that you work on. In real production environment, you must specify both the address and port numbers at the time of socket creation.
+    \item If you create a socket, the best practice is to change the address and port numbers to your preferred ones to avoid confusion.
+    \item Both address and port must be provided as a string. Please see the examples.
+    \item The flexibility that you have to use a socket without specifying a port number is due to this specific lab environment. In real production environments, you must specify both the address and port number at the time of socket creation.
 \end{itemize}
 
 %-------------------------------------------------------------------------------------------------
 \subsubsection{\texttt{Socket.sendto(application\_data, dst\_address, dst\_port)}}
 %-------------------------------------------------------------------------------------------------
-This method enables the application developers (students) to send data messages to destination endpoints. The type of the input parameters are as follows:
+This method enables the application developers (students) to send data messages to destination endpoints. The input parameters are as follows:
 \begin{itemize}
     \item \textbf{application\_data}: This parameter accepts string characters arguments.
     \item \textbf{dst\_address}: An IP address or any name in the format of string characters.
@@ -306,28 +328,29 @@ This method enables the application developers (students) to send data messages 
 \end{itemize}
 
 \textbf{Note:}
-The \texttt{sendto()} function can carry application data which is less than or equal to 100 bytes. It also returns -1 if the data is larger than the maximum segment size or it returns the length of the data that was successfully transmitted.
+The \texttt{sendto()} function can carry application data which is less than or equal to 100 bytes. It returns -1 if the data is larger than the maximum segment size, or it returns the length of the data that was successfully transmitted.
 
 The \texttt{sendto()} method can be used in three ways.
 \begin{enumerate}
-    \item Without specifying a destination address and port number: This way the \texttt{sendto()} method broadcasts its data to every node on the network.
-        \begin{lstlisting}[caption={}, language=Python]
+    \item Without specifying a destination address and port: This way the \texttt{sendto()} method broadcasts its data to every node on the network.
+\begin{lstlisting}[caption={Not specifying any destination (i.e. broadcasting)}, language=Python]
 my_socket.sendto(application_data)
-        \end{lstlisting}
+\end{lstlisting}
 
-    \item Using a destination address without specifying a port number: This approach can be used to send the data to a specific node on the network. However, if the name will be shared by several applications, they all will receive the message.
-        \begin{lstlisting}[caption={}, language=Python]
+    \item Using a destination address without specifying a port: This approach can be used to send the data to a specific node on the network. However, if the name is be shared by several applications, they all will receive the message.
+\begin{lstlisting}[caption={Specifying just the destination address}, language=Python]
 my_socket.sendto(application_data='hi', dst_address='130.45.36.78')
-        \end{lstlisting}
+\end{lstlisting}
 
-    \item Specifying both the destination address and port number: This approach can be used to send the data to a specific application endpoint.
-        \begin{lstlisting}[caption={}, language=Python]
+    \item Specifying both the destination address and port: This approach can be used to send the data to a specific application endpoint.
+\begin{lstlisting}[caption={Specifying both destination address and port}, language=Python]
 my_socket.sendto(application_data='hi', dst_address='130.45.36.78', dst_port='app1')
-        \end{lstlisting}
+\end{lstlisting}
+
 \end{enumerate}
 
 \textbf{Note:}
-To allow the receiver endpoint to receive the data messages, the destination address and port numbers must match those of the receiver socket object.
+To allow the receiver endpoint to receive data messages, the \texttt{dst\_address} and \texttt{dst\_port} must match those of the receiver socket object.
 Therefore, you must first change the receiver's source address and port number to any values of your choice before you send the data to the receiver.
 The new values can be used as the destination address on the \texttt{sendto()} method.
 Please complete the track 1 modules to see various examples of how to use your knowledge about the \texttt{sendto()} method in building your own applications.
@@ -335,17 +358,21 @@ Please complete the track 1 modules to see various examples of how to use your k
 %-------------------------------------------------------------------------------------------------
 \subsubsection{\texttt{Socket.recvfrom()}}
 %-------------------------------------------------------------------------------------------------
-This method can be used to obtain the data messages from the network. The \texttt{recvfrom()} method does not require any input arguments. If the method is used, it only receives the broadcast messages or the messages that are destined to this receiver.
+This method can be used to obtain data messages from the network. The \texttt{recvfrom()} method does not require any input arguments. If the method is used, it only receives broadcast messages or the messages that are destined for this receiver.
 
 \textbf{Note:}
-The receiver endpoint is identifiable on the network by either its source address or its source address and port number.
-Therefore, if a message is sent to a receiver by only specifying the destination address, the receiver can obtain the message if the destination address matches the one on the receiver. The receiver will also check the port number only if it is provided as a part of the destination address on the \texttt{sendto()} method. Please complete the track 1 modules to see various examples of how \texttt{recvfrom()} method can be used to build your own applications.
+The receiver endpoint is identifiable on the network by either its source address, or its source address and port number.
+Therefore, if a message is sent to a receiver by only specifying the destination address, the receiver can obtain the message if the destination address matches the one on the receiver.
+The receiver will also check the port only if it is provided as a part of the destination address on the \texttt{sendto()} method.
+Please complete the track 1 modules to see various examples of how the \texttt{recvfrom()} method can be used to build your own applications.
 
 \textbf{Note:}
 The \texttt{recvfrom()} method will return the source (sender) address of the message as well as the message data.
 The address will be returned as a list where the first element is the sender's address and the second element is the sender's port number.
-Please note that if you send a broadcast message or a message without a destination port number, you may still receive the source address and port number.
-These values are either the sender's initial address and port number that are chosen at the time of the socket creation or are the values that have been set by the sender's application developer. In any case, you can use this information to get back to the sender, if necessary. Track 1 modules will show you how you can take the advantage of these information in building your own applications.
+Please note that if you send a broadcast message or a message without a destination port, you may still receive the source address and port.
+These values are either the sender's initial address and port that are chosen at the time of socket creation, or are the values that have been set by the sender's application developer.
+In any case, you can use this information to reply to the sender.
+Track 1 modules will show you how you can take the advantage of this information in building your own applications.
 
 \begin{lstlisting}[caption={Example for using \texttt{recvfrom()}}, language=Python]
 a, b = my_socket.recvfrom()
@@ -358,15 +385,16 @@ print(b) # Message Data
 %-------------------------------------------------------------------------------------------------
 This method can be used to show the header of the last sent message. When you use the \texttt{sendto()} method to send a message, the \texttt{sendto()} will create two data structures.
 \begin{enumerate}
-    \item \textbf{Message Header}: The header contains four pieces of data and is used to allow the network to navigate the messages to their destinations. The header contains the \texttt{[source\_address, source\_port, destination\_address, destination\_port]}. Therefore, by using this method you can always see the header of the last sent message.
+    \item \textbf{Message Header}: The header contains four pieces of data and is used to allow the network to direct messages to their destinations. The header contains \texttt{[source\_address, source\_port, destination\_address, destination\_port]}. Therefore, by using this method, you can always see the header of the last sent message.
     \item \textbf{Segment}: The segment includes both the header and the application data.
 \end{enumerate}
 
 \textbf{Note:}
-The information in the header depends on the values of the source address and how the developer specify the destination receiver for the \texttt{sendto()} method. You can see an example of how to use this method by completing the track 1 module 4.
+The information in the header depends on the values of the source address and how the developer specified the destination receiver for the \texttt{sendto()} method.
+You can see an example of how to use this method by completing the track 1 module 4.
 
 \begin{itemize}
-    \item A message header
+    \item A message header:
 		% figvs takes 4 parameters (see the style sheet for source code)
 		%   1) Image width (w.r.t. column)
 		%   2) Image file name
@@ -374,8 +402,8 @@ The information in the header depends on the values of the source address and ho
 		%   4) Caption
 		\figvs{0.9}{msg-header}{trim=0cm 0cm 0cm 0cm,clip}{A message header.}
 
-    \item A message segment
-		\figvs{0.7}{msg-segment}{trim=0cm 0cm 0cm 0cm,clip}{A message segment.}
+    \item A message segment:
+		\figvs{0.7}{msg-segment}{trim=0cm 0cm 0cm 0cm,clip}{A message segment, containing both the header and message data.}
 \end{itemize}
 
 \begin{lstlisting}[caption={Example for using \texttt{display\_last\_header()}}, language=Python]
@@ -385,7 +413,7 @@ my_socket.display_last_header()
 %-------------------------------------------------------------------------------------------------
 \subsubsection{\texttt{Socket.display\_last\_segment()}}
 %-------------------------------------------------------------------------------------------------
-The same as above, this method can be used to see the last segment's content.
+Similar to above, this method can be used to see the last segment's message data.
 
 \textbf{Note:}
 You can see an example of how to use this method by completing track 1 module 4.
