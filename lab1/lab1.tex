@@ -34,20 +34,36 @@ To use a port number, applications are required to use a socket. A socket is one
 This lab consists of two important tracks. Each track has an important goal and a set of objectives that must be met to satisfy the goal. Please read the information below which explains the goal and objectives of each labs carefully and follow the steps that are involved to complete each objective.
 %-------------------------------------------------------------------------------------------------
 
-
+%-------------------------------------------------------------------------------------------------
 \subsection{Lab Initialization}
 \label{subsec:lab-init}
 %-------------------------------------------------------------------------------------------------
-You first need to access the starter code that is provided to you and navigate to the network-layering directory. All the labs requirements including the \texttt{ece361} library are included in the starter code virtual environment which must be activated first. To activate the virtual environment, please open a terminal and run the following command line onto your open terminal.
+This lab includes starter code that uses a custom-built Python 3 library called \texttt{ece361}. A Python virtual environment will be created, that will include the library, where you will do all the work in this lab. Virtual environments must be "activated" before you attempt to run the code inside. We have provided an initialization script for you that will setup this virtual environment, along with the starter code, and the custom library.
 
-\textbf{TLIN TODOOOOOOOOOOOOOOOOOOO}
+\hint{It's highly recommended to update your VM before starting each lab. Open a terminal (in the VM), and type \texttt{ece361-update}}
 
-Note that after the virtual environment is activated, you will see (.venv) is written before the input line on your terminal. The following is an example.
+To run the initialization script for lab 1, open a terminal and type: \texttt{ece361-init}. You should see something similar to listing~\ref{lst:init-example}.
+\begin{lstlisting}[style=ece361shell, caption={Initializing lab 1}, label={lst:init-example}]
+ubuntu@ece361:~$ ece361-lab-init 1
+Finding available UG EECG host...
+Warning: Permanently added 'ug251.eecg.utoronto.ca,128.100.13.251' (ECDSA) to the list of known hosts.
+Creating working directory for lab 1 at /home/ubuntu/lab1
+Creating Python3 virtual environment...
+Installing libraries...
 
+...
+
+Done. Now run "source /home/ubuntu/lab1/sourceMe" to activate the virtual environment.
+\end{lstlisting}
+
+The initialization script creates a working directory for this lab, located at \texttt{~/lab1}. Within that directory, there is a file called \texttt{sourceMe} which is used to start the virtual environment. To activate the virtual environment, run the \texttt{source} command as shown in listing~\ref{lst:init-example}. You should see a \texttt{(.venv)} appear in your prompt, confirming the environment is activated.
+\point{You will need to activate the virtual environment \textbf{in each terminal} that runs code belonging to this lab.}
+
+You should also notice two sub-directories, named \texttt{track1} and \texttt{track2}. These provide tutorial and starter code for the work you will do in sections~\ref{sec:track1} and~\ref{sec:track2}, respectively.
 
 
 %-------------------------------------------------------------------------------------------------
-\section{Track 1}
+\section{Track 1: Tutorial Material}
 \label{sec:track1}
 %-------------------------------------------------------------------------------------------------
 This is a tutorial track which explains the use of network addresses and port numbers in guiding the applications data on the network. The goal of the track is to guide you on a step by step coding experiment that allows you to experience the importance of addressing as well as showing you how to work with the \texttt{ece361} library. You do not need to write codes for this track. You only need to follow the steps to fulfill the track objectives. This track follows four important objectives which are designed in the form of individual modules. You and your team members must follow the steps included in each module to complete its objective.
@@ -136,7 +152,7 @@ As you can see, the sender's node application uses a port number to transmits a 
 The receiver application can have access to the senders application port number and address via the \texttt{recvfrom()} return values. Please see the lab appendix for further information on how to use the \texttt{recvfrom()}.
 
 %-------------------------------------------------------------------------------------------------
-\section{Track 2}
+\section{Track 2: File Transfer}
 \label{sec:track2}
 %-------------------------------------------------------------------------------------------------
 After showing different forms of transmitting data messages across the network, this track's goal is to ask you to complete a programming challenge that allows a sender application to open and read a file and send it to a destination receiver application, where the file will be reassembled and written on the disk.
