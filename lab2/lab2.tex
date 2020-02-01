@@ -53,7 +53,11 @@ You should see a \texttt{(.venv)} appear in your prompt, confirming the environm
 \point{You will need to activate the virtual environment \textbf{in each terminal} that runs code belonging to this lab.}
 
 \warn{The \texttt{ece361} library used in this lab is different than the one from lab 1. Your lab 1 code will be unable to run in this new virtual environment}
+
+\textbf{TODO: BRIEFLY DESCRIBE DIRECTORY STRUCTURE AND FILES PROVIDED}
 %You should also notice two sub-directories under the working directory, named \texttt{track1} and \texttt{track2}. These provide the tutorial and starter code for the work you will do in sections~\ref{sec:track1} and~\ref{sec:track2}, respectively.
+
+\point{If you discover a bug in any of the files provided, please report it on Piazza.}
 
 %-------------------------------------------------------------------------------------------------
 \section{Provided Scripts}
@@ -423,25 +427,32 @@ After finishing the lab, please run:
 $ sudo sh setup_scripts/lab2_cleanup.sh
 \end{lstlisting}
 
-\section{TA Grading}
-\label{sec:tagrading}
-%-------------------------------------------------------------------------------------------------
-\textbf{TODO}
-
 %-------------------------------------------------------------------------------------------------
 \section{Exerciser}
 \label{sec:exercise}
 %-------------------------------------------------------------------------------------------------
-\textbf{TODO}
+You can use the exerciser to help test the correctness of your implementation. The exerciser will run a set of public test cases against your code.
+Ensure you have the following files all within the same directory:
+\begin{itemize}
+    \item \textbf{stopandwaitsender.py}: Your completed stop-and-wait sender code from section~\textbf{TODO}.
+    \item \textbf{slidingwindowsender.py}: Your completed sliding window sender code from section~\textbf{TODO}.
+\end{itemize}
+
+In terminal, browse to the directory containing the files and type \texttt{ece361-exercise \thelab}.
+
 
 %-------------------------------------------------------------------------------------------------
 \section{Submission}
-\textbf{TODO}
-Tell them to submit just 'stopandwaitsender.py' and 'slidingwindowsender.py'. During the lab they can change other files for experimenting purposes, but their final code have to work with the code we provide them.
-
-Also tell them if they discover a bug in one of the files please report it (Piazza?)
 \label{sec:submission}
 %-------------------------------------------------------------------------------------------------
-\textbf{TODO}
+Once you are confident of your implementation, you can run the submission process (which will invoke the exerciser before submitting).
+Only one person in the group needs to submit.
+
+From the same directory as where you ran the exerciser, type \texttt{ece361-submit submit \thelab}.
+
+You can then verify the submission by typing \texttt{ece361-submit list \thelab}.
+
+At some point after the lab's due date, private test cases will be run against your submission to calculate your final mark.
+
 
 \end{document}
