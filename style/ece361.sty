@@ -84,7 +84,7 @@
   \begin{btHighlight}[#1]\bgroup\aftergroup\bt@HL@endenv%
 }
 \def\bt@HL@endenv{%
-  \end{btHighlight}%   
+  \end{btHighlight}%
   \egroup
 }
 \newcommand{\bt@HL@box}[2][]{%
@@ -97,6 +97,8 @@
 % \makeatother
 
 % listing config
+\lstset{upquote=true}
+
 \lstdefinestyle{ece361-base}{
   backgroundcolor=\color{white},   % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}
   basicstyle=\small\ttfamily,% the size of the fonts that are used for the code
@@ -108,7 +110,7 @@
   extendedchars=true,              % lets you use non-ASCII characters; for 8-bits encodings only, does not work with UTF-8
   frame=single,                    % adds a frame around the code
   keepspaces=true,                 % keeps spaces in text, useful for keeping indentation of code (possibly needs columns=flexible)
-  keywordstyle=\color{blue},       % keyword style 
+  keywordstyle=\color{blue},       % keyword style
   language=,                       % the language of the code
   numbers=left,                    % where to put the line-numbers; possible values are (none, left, right)
   numbersep=5pt,                   % how far the line-numbers are from the code
@@ -203,7 +205,7 @@
 % for shell sessions, but without keyword highlighting
 \lstdefinestyle{commandline}{
   style=ece361-shell-base,            % inherit settings
-  keywordstyle=,       % keyword style 
+  keywordstyle=,       % keyword style
   stringstyle=,
   morecomment=[l]{\#},
   moredelim=**[is][\btHL]{`}{`}    % inline highlighting
@@ -238,7 +240,7 @@
 \begin{mdframed}[hidealllines=true,backgroundcolor=yellow!40]
 	\begin{tabular}{cl}
 		\begin{tabular}{c}
-			\includegraphics[width=.06\columnwidth,keepaspectratio,trim=0cm 10cm 4.2cm 0.3cm,clip]{\docsRoot/common-assets/bulb}	
+			\includegraphics[width=.06\columnwidth,keepaspectratio,trim=0cm 10cm 4.2cm 0.3cm,clip]{\docsRoot/common-assets/bulb}
 		\end{tabular}
 		&\begin{tabular}{l}
 			\parbox{0.85\linewidth}{#1}
@@ -254,7 +256,7 @@
 \begin{mdframed}[hidealllines=true,backgroundcolor=red!30]
 	\begin{tabular}{cl}
 		\begin{tabular}{c}
-			\includegraphics[width=.07\columnwidth,keepaspectratio,trim=0cm 0.45cm 0cm 0.4cm,clip]{\docsRoot/common-assets/warning}	
+			\includegraphics[width=.07\columnwidth,keepaspectratio,trim=0cm 0.45cm 0cm 0.4cm,clip]{\docsRoot/common-assets/warning}
 		\end{tabular}
 		&\begin{tabular}{l}
 			\parbox{0.85\linewidth}{#1}
@@ -270,7 +272,7 @@
 \begin{mdframed}[hidealllines=true,backgroundcolor=blue!20]
 	\begin{tabular}{cl}
 		\begin{tabular}{c}
-			\includegraphics[width=.07\columnwidth,keepaspectratio,trim=0cm 0cm 0cm 0cm,clip]{\docsRoot/common-assets/work}	
+			\includegraphics[width=.07\columnwidth,keepaspectratio,trim=0cm 0cm 0cm 0cm,clip]{\docsRoot/common-assets/work}
 		\end{tabular}
 		&\begin{tabular}{l}
 			\parbox{0.85\linewidth}{#1}
@@ -286,7 +288,7 @@
 \begin{mdframed}[hidealllines=true,backgroundcolor=green!30]
 	\begin{tabular}{cl}
 		\begin{tabular}{c}
-			\includegraphics[width=.07\columnwidth,keepaspectratio,trim=0cm 0cm 0cm 0cm,clip]{\docsRoot/common-assets/point}	
+			\includegraphics[width=.07\columnwidth,keepaspectratio,trim=0cm 0cm 0cm 0cm,clip]{\docsRoot/common-assets/point}
 		\end{tabular}
 		&\begin{tabular}{l}
 			\parbox{0.85\linewidth}{#1}

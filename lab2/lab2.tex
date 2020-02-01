@@ -6,9 +6,9 @@
 
 % Lab parameters
 \def\thelab{2}
-\def\datedue{Feb. 7, 2020 @ 3 PM}
+\def\datedue{Feb. 17, 2020 @ 11:59 PM}
 
-\useCompactTitle{ECE361 Lab \thelab}{ARQ Protocols}
+\useCompactTitle{ECE361 Lab \thelab}{Automatic Repeat Request (ARQ) Protocols}
 
 %-------------------------------------------------------------------------------------------------
 \begin{document}
@@ -25,112 +25,135 @@
 In many applications reliable data transmission over an unreliable service is required. ARQ protocols are for exactly that. In this lab, you will be given 2 virtual hosts and an unreliable channel between them. With that you will first enhance the Stop and Wait protocol implemented in lab 1 to work on an unreliable channel. After that you will implement a better, more efficient sliding window protocol.
 
 %-------------------------------------------------------------------------------------------------
-\section{Preparation}
-\label{sec:preparation}
+\subsection{Lab Initialization}
+\label{subsec:lab-init}
 %-------------------------------------------------------------------------------------------------
-\subsection{Network Namespaces}
-Network namespaces virtualize the network stack. Each network namespace contains its own interfaces, routing tables and iptables rules. The script for setting up 2 network namespaces and a communication channel between them is provided to you. Run the following command:
-\begin{lstlisting}[language=bash]
-$ sudo sh setup_scripts/lab2_setup.sh
-\end{lstlisting}
-Open 2 terminals and run the following commands:
-On terminal 1:
-\begin{lstlisting}[language=bash]
-$ sudo ip netns exec h1 bash
-\end{lstlisting}
-On terminal 2:
-\begin{lstlisting}[language=bash]
-$ sudo ip netns exec h2 bash
-\end{lstlisting}
-You might have guessed it, 2 namespaces, h1 and h2 are created and we opened a bash shell within each namespace. Now, we can find out about each namespace using the utility commands introduced in lab 1. For example, in terminal 1, run:
-\begin{lstlisting}[language=bash]
-$ ip addr
-\end{lstlisting}
-The output will look something like this:
+This lab includes starter code that uses a custom-built Python 3 library called \texttt{ece361}. A Python virtual environment will be created, that will include the library, where you will do all the work in this lab. Virtual environments must be "activated" before you attempt to run the code inside. We have provided an initialization script for you that will setup this virtual environment, along with the starter code, and the custom library.
 
-\begin{minipage}{\linewidth}
-\begin{lstlisting}[caption={Output of 'ip addr'}, language=bash]
-1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1
-    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
-    inet 127.0.0.1/8 scope host lo
-       valid_lft forever preferred_lft forever
-    inet6 ::1/128 scope host 
-       valid_lft forever preferred_lft forever
-3: veth1@if4: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
-    link/ether 96:9d:be:75:82:4e brd ff:ff:ff:ff:ff:ff link-netnsid 0
-    inet 192.168.1.1/24 scope global veth1
-       valid_lft forever preferred_lft forever
-    inet6 fe80::949d:beff:fe75:824e/64 scope link 
-       valid_lft forever preferred_lft forever
-\end{lstlisting}
-\end{minipage}
-The first entry is the loopback interface which is created by default when the namespace gets created. The second entry veth1 is the most important. It is created for communication between h1 and h2. As you can see, in the h1 interface the ip address associated with veth1 is 192.168.1.1. Similarly, the ip address for h2 is 192.168.1.2.
-\subsection{Test Communication between Virtual Hosts}
-On the h1 terminal, run:
-\begin{lstlisting}[language=bash]
-$ ping 192.168.1.2
-\end{lstlisting}
-If everything works correctly, the ping should work. Similarly, the ping from h2 to h1 should also work.
-\subsection{Adding Packet Drop}
-We need an unreliable channel so we can implement ARQ on top of that. The tool for doing that is called tc.
-Run the following command in another terminal outside of the namespaces:
-\begin{lstlisting}[language=bash]
-$ sudo tc qdisc add dev veth0 root netem loss 10%
-\end{lstlisting}
-You can find out more about the tc tool by running the 'man tc' command.
-The 'ping' command can be used to test packet loss as well. However, there is a tool called iperf3 which is better suited for this purpose. From the h1 terminal, run:
-\begin{lstlisting}[language=bash]
-$ iperf3 -s
-\end{lstlisting}
-From the h2 terminal, run:
-\begin{lstlisting}[language=bash]
-$ iperf3 -c 192.168.1.1 -u -t 10
-\end{lstlisting}
-Wait until the test finishes, and take note of the last few lines of output:
+\hint{It's highly recommended to update your VM before starting each lab. Open a terminal (in the VM), and type \texttt{ece361-update}}
 
-\begin{minipage}{\linewidth}
-\begin{lstlisting}[caption={Output of 'iperf3'}, language=bash]
-- - - - - - - - - - - - - - - - - - - - - - - - -
-[ ID] Interval           Transfer     Bandwidth       Jitter    Lost/Total Datagrams
-[  4]   0.00-10.00  sec  1.24 MBytes  1.04 Mbits/sec  0.033 ms  18/159 (11%)  
-[  4] Sent 159 datagrams
-\end{lstlisting}
-\end{minipage}
+To run the initialization script for lab \thelab, open a terminal and type \texttt{ece361-lab-init \thelab}. You should see something similar to listing~\ref{lst:init-example}.
+\begin{lstlisting}[style=ece361shell, caption={Initializing lab \thelab.}, label={lst:init-example}]
+ubuntu@ece361:~$ ece361-lab-init (@"\thelab"@)
+Finding available UG EECG host...
+Warning: Permanently added 'ug251.eecg.utoronto.ca,128.100.13.251' (ECDSA) to the list of known hosts.
+Creating working directory for lab (@"\thelab"@) at (@"\btHL /home/ubuntu/lab\thelab"@)
+Creating Python3 virtual environment...
+Installing libraries...
 
-\noindent For the Lost/Total Datagrams column you should be getting around 10\%. Actual results may vary from run to run.
+...
 
-\noindent Notice that if you run the iperf3 test in the other direction from h1 to h2, there is no packet loss. This is because we have only enabled packet loss in a single direction. To enable packet loss from h1 to h2, run the following command:
-\begin{lstlisting}[language=bash]
-$ sudo tc qdisc add dev veth2 root netem loss 10%
+Done. Now run (@"\btHL source /home/ubuntu/lab\thelab/sourceMe"@) to activate the virtual environment.
 \end{lstlisting}
 
-Now run the iperf3 test again, and you should see packet loss for both directions.
-%-------------------------------------------------------------------------------------------------
-\subsection{Activate the Virtual Environment}
-Activate the virtual environment.
-\begin{lstlisting}[language=bash]
-$ source venv/bin/activate
-\end{lstlisting}
-You need to run the above command in both terminals containing the h1 and h2 namespaces.
+The initialization script creates a working directory for this lab, located at \texttt{\textasciitilde/lab\thelab}.
+Within that directory, there is a file called \texttt{sourceMe} which is used to start the virtual environment.
+To activate the virtual environment, run the \texttt{source} command as shown in listing~\ref{lst:init-example}.
+You should see a \texttt{(.venv)} appear in your prompt, confirming the environment is activated.
+\point{You will need to activate the virtual environment \textbf{in each terminal} that runs code belonging to this lab.}
 
-On terminal 1:
-\begin{lstlisting}[language=bash]
-$ sudo ip netns exec h1 bash
-$ source venv/bin/activate
-\end{lstlisting}
-On terminal 2:
-\begin{lstlisting}[language=bash]
-$ sudo ip netns exec h2 bash
-$ source venv/bin/activate
-\end{lstlisting}
-Once the virtual environment is created the command 'python' can be used in place of 'python3'. Verify that the virtual environment is created with the correct python version. Make sure it is python 3.x not python 2.x. For example, within the virtual environment, run:
-\begin{lstlisting}[language=bash]
-$ python --version
-Python 3.5.2
-\end{lstlisting}
+\warn{The \texttt{ece361} library used in this lab is different than the one from lab 1. Your lab 1 code will be unable to run in this new virtual environment}
+%You should also notice two sub-directories under the working directory, named \texttt{track1} and \texttt{track2}. These provide the tutorial and starter code for the work you will do in sections~\ref{sec:track1} and~\ref{sec:track2}, respectively.
 
 %-------------------------------------------------------------------------------------------------
-\subsection{Design Overview}
+\section{Provided Scripts}
+\label{sec:provided-scripts}
+%-------------------------------------------------------------------------------------------------
+This section will cover how to use the scripts you will use during this lab.
+
+%-------------------------------------------------------------------------------------------------
+\subsection{Virtual Network}
+%-------------------------------------------------------------------------------------------------
+In this lab you will create a virtual network consisting of two hosts connected via a single switch\footnote{A network switch is a type of packet forwarding device}, all fully emulated within your virtual machine (VM).
+A script named \texttt{lab2-createNet} has been provided to you within the lab working directory, which will create the virtual network with the topology described.
+When you run the script, you should see something similar to listing~\ref{lst:create-virtual-net}.
+
+\begin{lstlisting}[style=ece361shell, caption={Creating the virtual network.}, label={lst:create-virtual-net}]
+ubuntu@ece361:~/lab2$ ./lab2-createNet
+Creating new virtual network (2 hosts, 1 switch)...
+Configuring host IP addresses...
+Done.
+
+
+Created two hosts with (ID: IP):
+        h1: 192.168.1.1
+        h2: 192.168.1.2
+
+\end{lstlisting}
+
+The virtual network's two hosts, as seen in listing~\ref{lst:create-virtual-net}, has been assigned IPs \texttt{192.168.1.1} and \texttt{192.168.1.2}.
+
+%-------------------------------------------------------------------------------------------------
+\subsection{Entering a Virtual Host}
+%-------------------------------------------------------------------------------------------------
+To run commands from within one of the virtual hosts, you will need to first "enter" it using the \texttt{lab2-enterHost} script provided to you.
+See listing~\ref{lst:become-host} for an example of how to run the script.
+
+\begin{lstlisting}[style=ece361shell, caption={Entering into one of the virtual hosts.}, label={lst:become-host}]
+ubuntu@"ece361":~/lab2$ ./lab2-enterHost h1
+ubuntu@"ece361-h1":~/lab2$
+ubuntu@ece361-h1:~/lab2$ ifconfig
+h1-eth0   Link encap:Ethernet  HWaddr 1a:8f:9d:d2:0c:99
+          inet addr:192.168.1.1  Bcast:192.168.1.255  Mask:255.255.255.0
+...
+\end{lstlisting}
+
+In the example shown in listing~\ref{lst:become-host}, note the changed command-line prompt, which indicates that the terminal is now within virtual host h1.
+Running \texttt{ifconfig} as shown, note the interface has an IP of \texttt{192.168.1.1}, as expected for this particular host.
+
+%Network namespaces virtualize the network stack. Each network namespace contains its own interfaces, routing tables and iptables rules. The script for setting up 2 network namespaces and a communication channel between them is provided to you. Run the following command:
+%You might have guessed it, 2 namespaces, h1 and h2 are created and we opened a bash shell within each namespace. Now, we can find out about each namespace using the utility commands introduced in lab 1. For example, in terminal 1, run:
+%The first entry is the loopback interface which is created by default when the namespace gets created. The second entry veth1 is the most important. It is created for communication between h1 and h2. As you can see, in the h1 interface the ip address associated with veth1 is 192.168.1.1. Similarly, the ip address for h2 is 192.168.1.2.
+
+To test the communication between virtual hosts h1 and h2, first enter h1 on an open terminal, and ping\footnote{"ping" is a simple command-line utility to test connectivity between hosts. Additionally, "Ping" is often used as a verb.} \texttt{192.168.1.2}.
+If the virtual network is functioning correctly, the ping should work, as seen in listing~\ref{lst:ping-h2}.
+
+\begin{lstlisting}[style=ece361shell, caption={Pinging h2 from within h1.}, label={lst:ping-h2}]
+ubuntu@ece361-h1:~/lab2$ ping -c4 192.168.1.2
+PING 192.168.1.2 (192.168.1.2) 56(84) bytes of data.
+64 bytes from 192.168.1.2: icmp_seq=1 ttl=64 time=0.056 ms
+64 bytes from 192.168.1.2: icmp_seq=2 ttl=64 time=0.060 ms
+64 bytes from 192.168.1.2: icmp_seq=3 ttl=64 time=0.046 ms
+64 bytes from 192.168.1.2: icmp_seq=4 ttl=64 time=0.076 ms
+
+--- 192.168.1.2 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 2997ms
+rtt min/avg/max/mdev = 0.046/0.059/0.076/0.013 ms
+\end{lstlisting}
+
+\hint{If you wish to exit the virtual host at any point, simply type \texttt{exit} on the command-line.}
+
+%-------------------------------------------------------------------------------------------------
+\subsection{Emulating Packet Loss}
+%-------------------------------------------------------------------------------------------------
+To see the effects of ARQ, we need an unreliable channel between the two virtual hosts.
+To emulate packet loss, we have provided a script called \texttt{lab2-adjustLoss} which allows you to control the loss rate of packets leaving a particular host.
+For example, you can emulate a packet loss rates for only packets leaving h1, or for h2 to h1.
+
+\warn{The \texttt{lab2-adjustLoss} script will \textbf{not} work if the terminal is within a virtual host.}
+
+\begin{lstlisting}[style=ece361shell, caption={Emulating packet loss.}, label={lst:adjust-loss}]
+ubuntu@ece361:~/lab2$ ./lab2-adjustLoss h1 20%
+ubuntu@ece361:~/lab2$ ./lab2-enterHost h1
+ubuntu@ece361-h1:~/lab2$ ping -c 10 192.168.1.2
+PING 192.168.1.2 (192.168.1.2) 56(84) bytes of data.
+64 bytes from 192.168.1.2: icmp_seq=2 ttl=64 time=0.932 ms
+64 bytes from 192.168.1.2: icmp_seq=3 ttl=64 time=0.195 ms
+64 bytes from 192.168.1.2: icmp_seq=4 ttl=64 time=0.049 ms
+64 bytes from 192.168.1.2: icmp_seq=5 ttl=64 time=0.051 ms
+64 bytes from 192.168.1.2: icmp_seq=6 ttl=64 time=0.047 ms
+64 bytes from 192.168.1.2: icmp_seq=7 ttl=64 time=0.039 ms
+64 bytes from 192.168.1.2: icmp_seq=8 ttl=64 time=0.061 ms
+64 bytes from 192.168.1.2: icmp_seq=9 ttl=64 time=0.060 ms
+
+--- 192.168.1.2 ping statistics ---
+10 packets transmitted, 8 received, 20% packet loss, time 9000ms
+rtt min/avg/max/mdev = 0.039/0.179/0.932/0.288 ms
+\end{lstlisting}
+
+%-------------------------------------------------------------------------------------------------
+\section{Library Overview}
+%-------------------------------------------------------------------------------------------------
 In the last lab, you were asked to manually split a large file into smaller segments and send each individual segment by calling some socket API. In this lab, we have abstracted some of the low level details so you can use a set of higher level APIs that are easier to work with.
 \figvs{0.8}{sender_class}{trim=0cm 0cm 0cm 0cm,clip}{Sender Class}
 \figvs{0.8}{frame_class}{trim=0cm 0cm 0cm 0cm,clip}{Frame Class}
@@ -293,7 +316,7 @@ Change the frame-size configuration back to 1:
 Now rerun the text\_file\_small.txt experiment and examine the result. You should see something like this:
 
 \begin{lstlisting}[language=bash]
-$ cat received.txt 
+$ cat received.txt
 I only havee a few bytess.
 \end{lstlisting}
 The actual result varies from run to run, but the key here is duplicated frames. If you don't see duplicated frames then try again. If you still can't see it then you might want to increase the frame drop rate (e.g. from 5% to 10%).
@@ -375,7 +398,7 @@ In the Stop and Wait protocol, since at most one frame can be outstanding at any
 \noindent Now open the file 'slidingwindowsender.py' and find the '\_\_ack\_nack' function. Implement this function based on what you just learnt.
 
 \subsection{Implement the Sliding Window ARQ}
-Based on what you've done so far, take a look at the '\_arq\_send' function in 'slidingwindowsender.py'. We have started the implementation by creating a send\_queue for keeping track of the sliding window. Follow the guidelines to complete the implementation. Please also implement the "frames\_sent" and "frames\_delivered" statistics. During the debugging stage, it is recommended to test transmitting "text\_file\_small.txt" with "frame-size" 1 and "--debug" on. (However, the DEBUG messages on the sender side needs to be implemented by you). 
+Based on what you've done so far, take a look at the '\_arq\_send' function in 'slidingwindowsender.py'. We have started the implementation by creating a send\_queue for keeping track of the sliding window. Follow the guidelines to complete the implementation. Please also implement the "frames\_sent" and "frames\_delivered" statistics. During the debugging stage, it is recommended to test transmitting "text\_file\_small.txt" with "frame-size" 1 and "--debug" on. (However, the DEBUG messages on the sender side needs to be implemented by you).
 
 
 \noindent After you are confident that you have a working solution, test your implementation by sending the 'binary\_file\_large' file on a channel with 5\% loss both directions and "frame-size" 1024:
