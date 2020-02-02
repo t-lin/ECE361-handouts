@@ -344,7 +344,7 @@ ubuntu@ece361-h2:~/lab2$ python3 sender.py --debug text_file_small.txt
 
 Try understanding the debug message. It shouldn't be too hard since this is just a simple stop-and-wait and you implemented the same algorithm in lab 1. However, later on when the algorithm gets more complicated this will become more useful.
 
-\subsection{Round Trip Time}
+\subsection{Round Trip Time (RTT)}
 Now let's try a larger file. For larger files we need to increase the frame size so the transmission doesn't take forever. Let's change the frame size to 1024 (or 1K bytes):
 \begin{lstlisting}[style=ece361-shell-base, caption={Configuration For Large File}]
 {
@@ -508,7 +508,7 @@ ubuntu@ece361-h1:~/lab2$ diff binary_file_large received
 \end{lstlisting}
 
 If the previous experiment succeeds, congratulations! You have a fully working stop-and-wait ARQ.
-Now open the file stopandwaitsender.py and have a look at the \texttt{\_arqsend} function.
+Now open the \texttt{stopandwaitsender.py} file and have a look at the \texttt{\_arqsend} function.
 You should understand the code at a high level before proceeding to the next section. You only need to understand what the API calls in that function are doing (you do not need to understand the details of how the APIs work under-the-hood).
 Also, you only need to look at that one single function, you do not need to read other parts of the code.
 However, if you are interested, you can read the entire code-base since we made all the source code available to you.
@@ -623,7 +623,7 @@ In real life, however, NACKs may be really `NACKs' indicating that the there is 
 %-------------------------------------------------------------------------------------------------
 \subsection{Implement the Sliding Window ARQ}
 %-------------------------------------------------------------------------------------------------
-Based on what you've learnt far, implement the \texttt{\_arq\_send} function in \texttt{slidingwindowsender.py}.
+Based on what you've learnt so far, implement the \texttt{\_arqsend} function in \texttt{slidingwindowsender.py}.
 During the debugging stage, it is recommended to test transmitting \texttt{text\_file\_small.txt} with frame size of 1 and \texttt{-{}-debug} on.
 (However, the DEBUG messages on the sender side needs to be implemented by you).
 After testing your code on the small test case, test sending the \texttt{binary\_file\_large} file using a frame size of 1024 and 5\% channel loss in both directions.
