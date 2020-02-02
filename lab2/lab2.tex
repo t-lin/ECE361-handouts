@@ -22,7 +22,7 @@
 \section{Overview}
 \label{sec:overview}
 %-------------------------------------------------------------------------------------------------
-In many applications reliable data transmission over an unreliable service is required. ARQ protocols are for exactly that. In this lab, you will be given 2 virtual hosts and an unreliable channel between them. With that you will first enhance the Stop and Wait protocol implemented in lab 1 to work on an unreliable channel. After that you will implement a better, more efficient sliding window protocol, in particular, the ``send many, receive one'' protocol.
+In many applications reliable data transmission over an unreliable service is required. ARQ protocols are for exactly that. In this lab, you will be given 2 virtual hosts and an unreliable channel between them. With that you will first enhance the Stop-and-Wait protocol implemented in lab 1 to work on an unreliable channel. After that you will implement a better, more efficient sliding window protocol, in particular, the Send Many, Receive One protocol.
 
 %-------------------------------------------------------------------------------------------------
 \subsection{Lab Initialization}
@@ -52,10 +52,40 @@ To activate the virtual environment, run the \texttt{source} command as shown in
 You should see a \texttt{(.venv)} appear in your prompt, confirming the environment is activated.
 \point{You will need to activate the virtual environment \textbf{in each terminal} that runs code belonging to this lab.}
 
-\warn{The \texttt{ece361} library used in this lab is different than the one from lab 1. Your lab 1 code will be unable to run in this new virtual environment}
+\warn{The \texttt{ece361} library used in this lab is different than the one from lab 1. Your lab 1 code will not work in this new virtual environment.}
 
-\textbf{TODO: BRIEFLY DESCRIBE DIRECTORY STRUCTURE AND FILES PROVIDED}
-%You should also notice two sub-directories under the working directory, named \texttt{track1} and \texttt{track2}. These provide the tutorial and starter code for the work you will do in sections~\ref{sec:track1} and~\ref{sec:track2}, respectively.
+In your lab \thelab~working directory, you should have the following files:
+\begin{itemize}
+    \item \texttt{lab2-createNet}, \texttt{lab2-enterHost}, and \texttt{lab2-adjustLoss},
+        \begin{itemize}
+            \item Various scripts for setting up and configuring the lab's virtual network
+        \end{itemize}
+
+    \item \texttt{example} directory, with \texttt{client\_improved.py}, \texttt{client\_simple.py}, and \texttt{server.py} within
+        \begin{itemize}
+            \item Sample code showing how to use the \texttt{select()} call in Python
+        \end{itemize}
+
+    \item \texttt{sender.py} and \texttt{receiver.py}
+        \begin{itemize}
+            \item The primary files you will run during this lab
+        \end{itemize}
+
+    \item \texttt{senderbase.py}, \texttt{stopwaitsender.py}, and \texttt{slidingwindowsender.py}
+        \begin{itemize}
+            \item Base sender class and two derived classes (which you will have to finish implementing)
+        \end{itemize}
+
+    \item \texttt{config.json}
+        \begin{itemize}
+            \item Configuration file that will be read by the sender and receiver
+        \end{itemize}
+
+    \item \texttt{binary\_file\_large} and \texttt{text\_file\_small.txt}
+        \begin{itemize}
+            \item Test files you will use during this lab
+        \end{itemize}
+\end{itemize}
 
 \point{If you discover a bug in any of the files provided, please report it on Piazza.}
 
@@ -63,7 +93,7 @@ You should see a \texttt{(.venv)} appear in your prompt, confirming the environm
 \section{Provided Scripts}
 \label{sec:provided-scripts}
 %-------------------------------------------------------------------------------------------------
-This section will cover how to use the scripts you will use during this lab.
+This section will provide an overview of the scripts provided to you as part of this lab, and show examples of their usage.
 
 %-------------------------------------------------------------------------------------------------
 \subsection{Virtual Network}
@@ -109,11 +139,11 @@ Running \texttt{ifconfig} as shown, note the interface has an IP of \texttt{192.
 %You might have guessed it, 2 namespaces, h1 and h2 are created and we opened a bash shell within each namespace. Now, we can find out about each namespace using the utility commands introduced in lab 1. For example, in terminal 1, run:
 %The first entry is the loopback interface which is created by default when the namespace gets created. The second entry veth1 is the most important. It is created for communication between h1 and h2. As you can see, in the h1 interface the ip address associated with veth1 is 192.168.1.1. Similarly, the ip address for h2 is 192.168.1.2.
 
-To test the communication between virtual hosts h1 and h2, first enter h1 on an open terminal, and ping\footnote{"ping" is a simple command-line utility to test connectivity between hosts. Additionally, "Ping" is often used as a verb.} \texttt{192.168.1.2}.
+To test the communication between virtual hosts h1 and h2, first enter h1 on an open terminal, and ping\footnote{"ping" is a command-line utility to test connectivity between hosts. It is also often used as a verb.} \texttt{192.168.1.2}.
 If the virtual network is functioning correctly, the ping should work, as seen in listing~\ref{lst:ping-h2}.
 
 \begin{lstlisting}[style=ece361shell, caption={Pinging h2 from within h1.}, label={lst:ping-h2}]
-ubuntu@ece361-h1:~/lab2$ ping -c4 192.168.1.2
+ubuntu@ece361-h1:~/lab2$ ping -c 4 192.168.1.2
 PING 192.168.1.2 (192.168.1.2) 56(84) bytes of data.
 64 bytes from 192.168.1.2: icmp_seq=1 ttl=64 time=0.056 ms
 64 bytes from 192.168.1.2: icmp_seq=2 ttl=64 time=0.060 ms
@@ -131,47 +161,71 @@ rtt min/avg/max/mdev = 0.046/0.059/0.076/0.013 ms
 \subsection{Emulating Packet Loss}
 %-------------------------------------------------------------------------------------------------
 To see the effects of ARQ, we need an unreliable channel between the two virtual hosts.
-To emulate packet loss, we have provided a script called \texttt{lab2-adjustLoss} which allows you to control the loss rate of packets leaving a particular host.
-For example, you can emulate a packet loss rates for only packets leaving h1, or for h2 to h1.
+To emulate packet loss, we have provided a script called \texttt{lab2-adjustLoss} which allows you to control the loss rate of packets entering a particular host.
+For example, listing~\ref{lst:adjust-loss} shows how to set a packet loss rate of 10\% for packets entering h1.
 
-\warn{The \texttt{lab2-adjustLoss} script will \textbf{not} work if the terminal is within a virtual host.}
+\warn{The \texttt{lab2-adjustLoss} script will \textbf{not} work if the terminal is within a virtual host, so double-check your prompt.}
 
-\begin{lstlisting}[style=ece361shell, caption={Emulating packet loss.}, label={lst:adjust-loss}]
-ubuntu@ece361:~/lab2$ ./lab2-adjustLoss h1 20%
+\begin{lstlisting}[style=ece361shell, caption={Emulating 10\% packet loss for packets entering h1.}, label={lst:adjust-loss}]
+ubuntu@ece361:~/lab2$ ./lab2-adjustLoss h1 10%
+\end{lstlisting}
+
+To test the effect of the loss rate, we will use a tool called \texttt{iperf}.
+With two terminals, enter h1 in one terminal, and enter h2 in the other.
+In terminal h1, run an \texttt{iperf} server (the terminal will pause, waiting for a client to connect and send it data), as shown in listing~\ref{lst:iperf-server}.
+
+\begin{lstlisting}[style=ece361shell, caption={Running an \texttt{iperf} server in h1.}, label={lst:iperf-server}]
 ubuntu@ece361:~/lab2$ ./lab2-enterHost h1
-ubuntu@ece361-h1:~/lab2$ ping -c 10 192.168.1.2
-PING 192.168.1.2 (192.168.1.2) 56(84) bytes of data.
-64 bytes from 192.168.1.2: icmp_seq=2 ttl=64 time=0.932 ms
-64 bytes from 192.168.1.2: icmp_seq=3 ttl=64 time=0.195 ms
-64 bytes from 192.168.1.2: icmp_seq=4 ttl=64 time=0.049 ms
-64 bytes from 192.168.1.2: icmp_seq=5 ttl=64 time=0.051 ms
-64 bytes from 192.168.1.2: icmp_seq=6 ttl=64 time=0.047 ms
-64 bytes from 192.168.1.2: icmp_seq=7 ttl=64 time=0.039 ms
-64 bytes from 192.168.1.2: icmp_seq=8 ttl=64 time=0.061 ms
-64 bytes from 192.168.1.2: icmp_seq=9 ttl=64 time=0.060 ms
+ubuntu@ece361-h1:~/lab2$ iperf -s -u
+------------------------------------------------------------
+Server listening on UDP port 5001
+Receiving 1470 byte datagrams
+UDP buffer size:  208 KByte (default)
+------------------------------------------------------------
 
---- 192.168.1.2 ping statistics ---
-10 packets transmitted, 8 received, 20% packet loss, time 9000ms
-rtt min/avg/max/mdev = 0.039/0.179/0.932/0.288 ms
 \end{lstlisting}
 
-From now on we assume you have opened at least 3 terminals. One outside of the virtual hosts, one within host h1 and another one within host h2.
+In a second terminal, we enter h2 and run \texttt{iperf} client to send traffic to h1 at a rate of 100 Mbps.
+Listing~\ref{lst:iperf-client} show the client in action with the end result highlighted, verifying the packet loss is being properly emulated.
 
-\begin{lstlisting}[style=ece361shell, caption={terminal outside of hosts}]
-ubuntu@ece361:~/lab2$
+\begin{lstlisting}[style=ece361shell, caption={Running an \texttt{iperf} client in h2.}, label={lst:iperf-client}]
+ubuntu@ece361:~/lab2$ ./lab2-enterHost 2
+ubuntu@ece361-h2:~/lab2$ iperf -c 192.168.1.1 -u -b 100M
+------------------------------------------------------------
+Client connecting to 192.168.1.1, UDP port 5001
+Sending 1470 byte datagrams
+UDP buffer size:  208 KByte (default)
+------------------------------------------------------------
+[  3] local 192.168.1.2 port 46722 connected with 192.168.1.1 port 5001
+[ ID] Interval       Transfer     Bandwidth
+[  3]  0.0-10.0 sec   120 MBytes   101 Mbits/sec
+[  3] Sent 85471 datagrams
+[  3] Server Report:
+[  3]  0.0-10.0 sec   108 MBytes  90.5 Mbits/sec   0.001 ms (@"\btHL 8539/85470 (10\%)"@)
+[  3]  0.0-10.0 sec  6 datagrams received out-of-order
 \end{lstlisting}
 
-\begin{lstlisting}[style=ece361shell, caption={h1 terminal}]
-ubuntu@ece361-h1:~/lab2$
-\end{lstlisting}
+After this test, you may kill the \texttt{iperf} server in the h1 terminal by pressing Ctrl+C.
 
-\begin{lstlisting}[style=ece361shell, caption={h2 terminal}]
-ubuntu@ece361-h2:~/lab2$
-\end{lstlisting}
+\point{For the remainder of this lab, we assume you have opened at least 3 terminals: one outside of the virtual hosts, one within host h1, and the other within host h2.}
 
+%\begin{lstlisting}[style=ece361shell, caption={terminal outside of hosts}]
+%ubuntu@ece361:~/lab2$
+%\end{lstlisting}
+%
+%\begin{lstlisting}[style=ece361shell, caption={h1 terminal}]
+%ubuntu@ece361-h1:~/lab2$
+%\end{lstlisting}
+%
+%\begin{lstlisting}[style=ece361shell, caption={h2 terminal}]
+%ubuntu@ece361-h2:~/lab2$
+%\end{lstlisting}
+
+%-------------------------------------------------------------------------------------------------
 \section{A Simple Example}
 \label{sec:example}
-Before starting this section it is highly recommended that you go through Appendix \ref{sec:appendix} to get familiar with the lab 2 library we provided to you.
+%-------------------------------------------------------------------------------------------------
+Before starting this section it is highly recommended that you go through Appendix~\ref{sec:appendix} to get familiar with the lab 2 library we provided to you.
 
 We have provided you with a simplified example (with source code) to illustrate some of the concepts of this lab. 'cd' into the 'examples' directory on all 3 terminals.
 
@@ -234,8 +288,7 @@ Now open the files 'client\_simple.py' and 'client\_improved.py' and try to unde
 \subsection{Simple Stop and Wait}
 We have implemented a stop and wait protocol similar to that of lab 1 that will work on an errorless channel. First open the file ``config.json'' and change it to the following (which should be the default anyway):
 
-\begin{minipage}{\linewidth}
-\begin{lstlisting}[caption={Configuration For Small File}]
+\begin{lstlisting}[style=ece361-shell-base, caption={Configuration For Small File}]
 {
     "sender_address": "192.168.1.2",
     "receiver_address": "192.168.1.1",
@@ -247,10 +300,9 @@ We have implemented a stop and wait protocol similar to that of lab 1 that will 
     "maxseqnum": 0
 }
 \end{lstlisting}
-\end{minipage}
 
 In this part we assume an errorless channel. Run the following outside of the virtual hosts:
-\begin{lstlisting}[style=ece361shell]
+\begin{lstlisting}[style=ece361shell, caption={Setting packet loss to 0\% in both directions.}]
 ubuntu@ece361:~/lab2$ ./lab2-adjustLoss h1 0%
 ubuntu@ece361:~/lab2$ ./lab2-adjustLoss h2 0%
 \end{lstlisting}
@@ -259,39 +311,42 @@ ubuntu@ece361:~/lab2$ ./lab2-adjustLoss h2 0%
 Now run the following:
 
 From the h1 terminal:
-\begin{lstlisting}[style=ece361shell, caption={}]
-ubuntu@ece361-h1:~/lab2$ python receiver.py received.txt
+\begin{lstlisting}[style=ece361-shell-base, caption={}]
+ubuntu@ece361-h1:~/lab2$ python3 receiver.py received.txt
 \end{lstlisting}
+
 From the h2 terminal:
-\begin{lstlisting}[style=ece361shell, caption={}]
-ubuntu@ece361-h2:~/lab2$ python sender.py text_file_small.txt
+\begin{lstlisting}[style=ece361-shell-base, caption={}]
+ubuntu@ece361-h2:~/lab2$ python3 sender.py text_file_small.txt
 \end{lstlisting}
-Since the receiver is just a server that always listens to incoming packets, it does not know when the transmission ends. Therefore, you need to Ctrl-C the receiver before proceeding. This applies to all sections of the lab.
+
+Since the receiver is just a server that always listens to incoming packets, it does not know when the transmission ends. Therefore, you need to \texttt{Ctrl-C} the receiver before proceeding. This applies to all sections of the lab.
 The sender should finish. Verify that the file gets transmitted successfully:
-\begin{lstlisting}[style=ece361shell]
+\begin{lstlisting}[style=ece361-shell-base, caption={}]
 ubuntu@ece361-h2:~/lab2$ cat received.txt
 I only have a few bytes.
 \end{lstlisting}
 
-\warn{Unlike section \ref{sec:example}, you cannot keep the receiver running between experiments. If you want to start a new transmission, you have to ``Ctrl-C'' the receiver. This is because this receiver writes to a file and the file needs to be closed before starting the next transmission, otherwise it will simply append to the file and won't yield the desired result.}
+\warn{Unlike section \ref{sec:example}, you cannot keep the receiver running between experiments. If you want to start a new transmission, you have to \texttt{Ctrl-C} the receiver. This is because this receiver writes to a file and the file needs to be closed before starting the next transmission, otherwise it will simply append to the file and won't yield the desired result.}
 
-\subsection {The \texttt{--}debug option}
+\subsection {The \texttt{-{}-debug} option}
 We have provided you with a feature that prints out the progress on the sender and receiver frame by frame. This is very useful for later on for either debugging your code or just to understand how the protocol works. Try the following:
 
 From the h1 terminal:
-\begin{lstlisting}[style=ece361shell, caption={}]
-ubuntu@ece361-h1:~/lab2$ python receiver.py --debug received.txt
-\end{lstlisting}
-From the h2 terminal:
-\begin{lstlisting}[style=ece361shell, caption={}]
-ubuntu@ece361-h2:~/lab2$ python sender.py --debug text_file_small.txt
+\begin{lstlisting}[style=ece361-shell-base, caption={}]
+ubuntu@ece361-h1:~/lab2$ python3 receiver.py --debug received.txt
 \end{lstlisting}
 
-Try understanding the debug message. It shouldn't be too hard since this is just a simple stop and wait and you implemented the same algorithm in lab 1. However, later on when the algorithm gets more complicated this will become more useful.
+From the h2 terminal:
+\begin{lstlisting}[style=ece361-shell-base, caption={}]
+ubuntu@ece361-h2:~/lab2$ python3 sender.py --debug text_file_small.txt
+\end{lstlisting}
+
+Try understanding the debug message. It shouldn't be too hard since this is just a simple stop-and-wait and you implemented the same algorithm in lab 1. However, later on when the algorithm gets more complicated this will become more useful.
 
 \subsection{Round Trip Time}
-Now let's try a larger file. For larger files we need to increase the frame-size so the transmission doesn't take forever. Let's change the frame-size to 1024 (or 1K bytes):
-\begin{lstlisting}[caption={Configuration For Large File}]
+Now let's try a larger file. For larger files we need to increase the frame size so the transmission doesn't take forever. Let's change the frame size to 1024 (or 1K bytes):
+\begin{lstlisting}[style=ece361-shell-base, caption={Configuration For Large File}]
 {
     "sender_address": "192.168.1.2",
     "receiver_address": "192.168.1.1",
@@ -306,43 +361,48 @@ Now let's try a larger file. For larger files we need to increase the frame-size
 Run the following:
 
 From the h1 terminal:
-\begin{lstlisting}[style=ece361shell, caption={}]
-ubuntu@ece361-h1:~/lab2$ python receiver.py received
+\begin{lstlisting}[style=ece361-shell-base, caption={}]
+ubuntu@ece361-h1:~/lab2$ python3 receiver.py received
 \end{lstlisting}
+
 From the h2 terminal:
-\begin{lstlisting}[style=ece361shell, caption={}]
-ubuntu@ece361-h2:~/lab2$ python sender.py binary_file_large
+\begin{lstlisting}[style=ece361-shell-base, caption={}]
+ubuntu@ece361-h2:~/lab2$ python3 sender.py binary_file_large
 \end{lstlisting}
 
-\warn{Do not use the '\texttt{--}debug' option when sending large files! The debug messages will flood your screen.}
+\warn{Do not use the \texttt{-{}-debug} option when sending large files! The debug messages will flood your screen.}
 
-Verify that the file get transmitted successfully, this time with a diff:
-\begin{lstlisting}[style=ece361shell, caption={}]
+Verify that the file gets transmitted successfully using \texttt{diff}:
+\begin{lstlisting}[style=ece361-shell-base, caption={}]
 ubuntu@ece361-h1:~/lab2$ diff binary_file_large received
 \end{lstlisting}
 
 Note that when the transmission ends the sender prints out some statistics:
 
-\begin{lstlisting}[style=ece361shell, caption={}]
+\begin{lstlisting}[style=ece361-shell-base, caption={}]
 ARQ protocol: stopandwait
-frames sent: 9106
-frames delivered: 9106
-transmission time: 0:00:03.292909
-average rtt: 0:00:00
-maximum rtt: 0:00:00
+Frames sent: 9106
+Frames delivered: 9106
+Transmission time: 0:00:03.292909
+Average RTT: 0:00:00
+Maximum RTT: 0:00:00
 \end{lstlisting}
 
-We have implemented the 'frames sent', 'frames delivered' and 'transmission time' statistics for you. We have left the rtt statistics for you to implement. Complete the class function \_update\_rtt in stopwaitsender.py, assuming a new frame just gets delivered with t\_send and t\_ack. You need to first calculated a new rtt sample based on t\_send and t\_ack and then update the rtt\_max and rtt\_total member variables. The rest of the calculations (e.g. average) has already been implemented for you. After you are done, rerun the previous binary\_file\_large experiment and make sure you get the rtt statistics printed out.
+We have implemented the \texttt{Frames sent}, \texttt{Frames delivered} and \texttt{Transmission time} statistics for you.
+We have left the RTT statistics for you to implement.
+Complete the class function \texttt{\_update\_rtt} in \texttt{stopwaitsender.py}, assuming a new frame just gets delivered with \texttt{t\_send} and \texttt{t\_ack}.
+You need to first calculated a new RTT sample based on \texttt{t\_send} and \texttt{t\_ack} and then update the \texttt{rtt\_max} and \texttt{rtt\_total} member variables.
+The rest of the calculations (e.g. average) has already been implemented for you.
+After you are done, rerun the previous \texttt{binary\_file\_large} experiment and make sure you get the RTT statistics printed out.
 
 \subsection{Handling Frame Drop}
 After you get the basic stop and wait working, enable frame drop from h2 to h1. Keep the channel from h1 to h2 errorless for now. For example, set the frame drop rate to 5\%:
-\begin{lstlisting}[style=ece361shell, caption={}]
-sudo tc qdisc change dev veth0 root netem loss 5%
+\begin{lstlisting}[style=ece361-shell-base, caption={}]
+ubuntu@ece361:~/lab2$ ./lab2-adjustLoss h1 5%
 \end{lstlisting}
-Let's change the frame-size back to 1 for now:
+Let's change the frame size back to 1 for now:
 
-\begin{minipage}{\linewidth}
-\begin{lstlisting}[caption={Configuration For Large File}, language=python]
+\begin{lstlisting}[style=ece361-shell-base, caption={Configuration For Large File}]
 {
     "sender_address": "192.168.1.2",
     "receiver_address": "192.168.1.1",
@@ -354,27 +414,30 @@ Let's change the frame-size back to 1 for now:
     "maxseqnum": 0
 }
 \end{lstlisting}
-\end{minipage}
-Rerun the 'text\_file\_small.txt with the '\texttt{--}debug' option. What is the result and why?
+
+Rerun the \texttt{text\_file\_small.txt} with the \texttt{-{}-debug} option. What is the result and why?
+
 \subsubsection {Choosing a timeout}
-In the previous experiment you saw that the prgram hang because if a frame is lost the sender would be waiting for the acknowledgement forever. To fix this, we need an appropriate timeout such that when the timer expires the sender retransmits the previous frame. Base on your rtt calculation in the previous section, change the "timeout" field of the config file from "null" to an appropriate value (Note: the unit is second, and floating point number is accepted)
+In the previous experiment you saw that the program hang because if a frame is lost the sender would be waiting for the acknowledgement forever.
+To fix this, we need an appropriate timeout such that when the timer expires the sender retransmits the previous frame.
+Based on your RTT calculation in the previous section, change the \texttt{"timeout"} field of the config file from \texttt{null} to an appropriate value (Note: the unit is second, and floating point number is accepted).
 
-\think{Should the timeout be based on the average or max rtt and why?}
+\think{Should the timeout be based on the average or max RTT and why?}
 
-\noindent Now rerun the 'text\_file\_small.txt' experiment and test if the transmission is successful.
+\noindent Now rerun the \texttt{text\_file\_small.txt} experiment and test if the transmission is successful.
 
-\noindent After you get the small file working, change frame-size to 1024 and try transmitting binary\_file\_large.
+\noindent After you get the small file working, change the frame size to 1024 and try transmitting \texttt{binary\_file\_large}.
 
 \think{Can you figure a mathematical relationship between the expected frames sent, frames deliverd and the frame drop rate? Does the experimental result agree with your formula?}
 
-\subsection {Handling Lost Ack}
+\subsection {Handling Lost ACK}
 Now let's enable frame lost from h1 to h2 as well.
-\begin{lstlisting}[style=ece361shell, caption={}]
-sudo tc qdisc change dev veth2 root netem loss 5%
+\begin{lstlisting}[style=ece361-shell-base, caption={}]
+ubuntu@ece361:~/lab2$ ./lab2-adjustLoss h2 5%
 \end{lstlisting}
 
-Change the frame-size configuration back to 1:
-\begin{lstlisting}[caption={Configuration For Large File}]
+Change the frame size configuration back to 1:
+\begin{lstlisting}[style=ece361-shell-base, caption={Configuration For Large File}]
 {
     "sender_address": "192.168.1.2",
     "receiver_address": "192.168.1.1",
@@ -386,17 +449,21 @@ Change the frame-size configuration back to 1:
     "maxseqnum": 0
 }
 \end{lstlisting}
-Now rerun the text\_file\_small.txt experiment and examine the result. You should see something like this:
+Now rerun the \texttt{text\_file\_small.txt} experiment and examine the result. You should see something like this:
 
-\begin{lstlisting}[style=ece361shell, caption={}]
+\begin{lstlisting}[style=ece361-shell-base, caption={}]
 ubuntu@ece361-h1:~/lab2$ cat received.txt
 I only havee a few bytess.
 \end{lstlisting}
-The actual result varies from run to run, but the key here is duplicated frames. If you don't see duplicated frames then try again. If you still can't see it then you might want to increase the frame drop rate (e.g. from 5% to 10%).
+The actual result varies from run to run, but the key here is duplicated frames.
+If you don't see duplicated frames then try again. If you still can't see it then you might want to increase the frame drop rate (e.g. from 5\% to 10\%).
 
-To explain what happened, since the ack frame can be lost, the next frame the receiver received can either be a resend of the previous frame (due to lost ack) or a new frame (if ack successfully received by the sender). Without sequence numbers the receiver cannot distinguish betweeen these two cases. The sequence numbers are actually implemented already, you just need to enable it in the config. Set the "maxseqnum" field of the config file to any positive integer (e.g. 64).
+To explain what happened, since the ACK frame can be lost, the next frame the receiver received can either be a resend of the previous frame (due to lost ACK) or a new frame (if ACK successfully received by the sender).
+Without sequence numbers the receiver cannot distinguish betweeen these two cases.
+The sequence numbers are actually implemented already, you just need to enable it in the config.
+Set the \texttt{"maxseqnum"} field of the config file to any positive integer (e.g. 64).
 
-\begin{lstlisting}[caption={Configuration For Large File}]
+\begin{lstlisting}[style=ece361-shell-base, caption={Configuration For Large File}]
 {
     "sender_address": "192.168.1.2",
     "receiver_address": "192.168.1.1",
@@ -409,11 +476,10 @@ To explain what happened, since the ack frame can be lost, the next frame the re
 }
 \end{lstlisting}
 
-Now rerun the 'text\_file\_small.txt' experiment and you should see that the file gets successfully transmitted (no more duplicated frames).
+Now rerun the \texttt{text\_file\_small.txt} experiment and you should see that the file gets successfully transmitted (no more duplicated frames).
 
-Finally, let's test the fully implemented stop and wait ARQ protocol on binary\_file\_large. Set the 'frame-size' back to 1024:
-
-\begin{lstlisting}[caption={Configuration For Large File}, language=python]
+Finally, let's test the fully implemented stop-and-wait ARQ protocol on \texttt{binary\_file\_large}. Set the frame size back to 1024:
+\begin{lstlisting}[style=ece361-shell-base, caption={Configuration For Large File}]
 {
     "sender_address": "192.168.1.2",
     "receiver_address": "192.168.1.1",
@@ -425,29 +491,42 @@ Finally, let's test the fully implemented stop and wait ARQ protocol on binary\_
     "maxseqnum": 64
 }
 \end{lstlisting}
+
 From the h1 terminal:
-\begin{lstlisting}[style=ece361shell, caption={}]
-ubuntu@ece361-h1:~/lab2$ python receiver.py received
-\end{lstlisting}
-From the h2 terminal:
-\begin{lstlisting}[style=ece361shell, caption={}]
-ubuntu@ece361-h2:~/lab2$ python sender.py binary_file_large
+\begin{lstlisting}[style=ece361-shell-base, caption={}]
+ubuntu@ece361-h1:~/lab2$ python3 receiver.py received
 \end{lstlisting}
 
-\noindent You might need to wait for a while for the transmission to finish. Verify that the file gets transmitted successfully using diff.
-\begin{lstlisting}[style=ece361shell, caption={}]
+From the h2 terminal:
+\begin{lstlisting}[style=ece361-shell-base, caption={}]
+ubuntu@ece361-h2:~/lab2$ python3 sender.py binary_file_large
+\end{lstlisting}
+
+\noindent You might need to wait for a while for the transmission to finish. Verify that the file gets transmitted successfully using \texttt{diff}.
+\begin{lstlisting}[style=ece361-shell-base, caption={}]
 ubuntu@ece361-h1:~/lab2$ diff binary_file_large received
 \end{lstlisting}
 
-\noindent If the previous experiment succeeds, congratulations! You have a fully working stop and wait ARQ. Now open the file stopandwaitsender.py and have a look at the ``\_\_arqsend'' function. You should understand the code before proceeding to the next section (You only need to understand the high level API calls in that function, you do not need to understand the details of how the APIs work under the hood). Also, you only need to look at that one single function, you do not need to read other parts of the code. However, if you are interested, you can read the entire code-base since we made all the source code available to you.
+If the previous experiment succeeds, congratulations! You have a fully working stop-and-wait ARQ.
+Now open the file stopandwaitsender.py and have a look at the \texttt{\_arqsend} function.
+You should understand the code at a high level before proceeding to the next section. You only need to understand what the API calls in that function are doing (you do not need to understand the details of how the APIs work under-the-hood).
+Also, you only need to look at that one single function, you do not need to read other parts of the code.
+However, if you are interested, you can read the entire code-base since we made all the source code available to you.
 
+%-------------------------------------------------------------------------------------------------
 \section{Sliding Window ARQ (Send Many, Receive One)}
 \label{sec:sliding}
+%-------------------------------------------------------------------------------------------------
+In this section, you will complete the implementation of a sender that uses the Send Many, Receive One ARQ protocol.
 
+%-------------------------------------------------------------------------------------------------
 \subsection{Change the Config File to Use Sliding Window ARQ}
-Change the "arq\_protocol" field of the config file from "stopandwait" to "slidingwindow". Make sure "window-size" is an integer greater than 1. Make sure "maxseqnum" is at least "window-size" (why?). Keep other parameters (e.g. timeout) the same as previous section:
-
-\begin{lstlisting}[caption={Sliding Window Configuration}]
+%-------------------------------------------------------------------------------------------------
+Change the \texttt{"arq\_protocol"} field of the config file from \texttt{"stopandwait"} to \texttt{"slidingwindow"}.
+Make sure \texttt{"window\_size"} is an integer greater than 1.
+Make sure \texttt{"maxseqnum"} is at least \texttt{"window\_size"}.
+Keep other parameters (e.g. timeout) the same as previous section.
+\begin{lstlisting}[style=ece361-shell-base, caption={Sliding Window Configuration}]
 {
     "sender_address": "192.168.1.2",
     "receiver_address": "192.168.1.1",
@@ -461,82 +540,103 @@ Change the "arq\_protocol" field of the config file from "stopandwait" to "slidi
 \end{lstlisting}
 
 \think{If you set the window-size to be 1, what does the Sliding Window ARQ become?}
+\think{Why must the \texttt{"maxseqnum"} be at least \texttt{"window\_size"}?}
 
-Try running the 'text\_file\_small.txt' experiment with '\texttt{--}debug' the same way as before:
+Try running the \texttt{text\_file\_small.txt} experiment with \texttt{-{}-debug} the same way as before:
 
 \noindent From the h1 terminal:
-\begin{lstlisting}[style=ece361shell, caption={}]
-ubuntu@ece361-h1:~/lab2$ python receiver.py --debug received.txt
+\begin{lstlisting}[style=ece361-shell-base, caption={}]
+ubuntu@ece361-h1:~/lab2$ python3 receiver.py --debug received.txt
 \end{lstlisting}
+
 From the h2 terminal:
-\begin{lstlisting}[style=ece361shell, caption={}]
-ubuntu@ece361-h2:~/lab2$ python sender.py --debug text_file_small.txt
+\begin{lstlisting}[style=ece361-shell-base, caption={}]
+ubuntu@ece361-h2:~/lab2$ python3 sender.py --debug text_file_small.txt
 \end{lstlisting}
 
-As you can see, the programs seem to be hanging without any debug outputs, which means no frame is being sent or received. This shouldn't surprise you since sliding window ARQ has not been implemented yet! Open the file slidingwindowsender.py and find the \_arqsend method. We have started the implementation for you by creating a send queue and your task is to complete the method. Apart from this method, the rest of the sender functions and the receiver are already implemented for you. We have given you some high level guidelines on what to do as well in the comments. Briefly go through the comments to have an idea of what needs to be done, but before you start coding, you must read the next section for a detailed description of our implementation of the sliding window protocol, which might differ in a few minor details from what you have learned.
+As you can see, the programs seem to be hanging without any debug outputs, which means no frame is being sent or received.
+This shouldn't surprise you since sliding window ARQ has not been implemented yet!
+Open the \texttt{slidingwindowsender.py} file and find the \texttt{\_arqsend} method.
+We have started the implementation for you by creating a send queue and your task is to complete the method.
+Apart from this method, the rest of the sender functions and the receiver are already implemented for you.
+We have given you some high level guidelines on what to do as well in the comments.
+Briefly go through the comments to have an idea of what needs to be done, but before you start coding, you must read the next section for a detailed description of our implementation of the sliding window protocol, which might differ in a few minor details from what you have learned.
 
+%-------------------------------------------------------------------------------------------------
 \subsection{Protocol Description}
 \label{sec:protocol}
-\figvs{0.4}{sw}{trim=0cm 0cm 0cm 0cm,clip}{Stop and Wait ARQ Timing Diagram}
+%-------------------------------------------------------------------------------------------------
+As you can see from Figure~\ref{sw}, stop-and-wait ARQ is inefficient because the channel is idle during the period where the sender waits for acknowledgement from the receiver.
+It would be much more efficient if the channel could be kept busy during this waiting period.
+This is where sliding window ARQ comes in, as illustrated in Figure~\ref{sliding}, which demonstrates how sliding window works on a perfect, errorless channel.
+\figvs{0.4}{sw}{trim=0cm 0cm 0cm 0cm,clip}{Stop-and-Wait ARQ Timing Diagram}
 \figvs{0.4}{sliding}{trim=0cm 0cm 0cm 0cm,clip}{Sliding Window ARQ Timing Diagram}
+
+A sliding window can be implemented on both the sender and the receiver side, but for this lab, we only consider sliding window on the sender side and the receiver still accepts one packet
+at a time, similar to a stop-and-wait receiver. This makes our protocol behave like "Send Many, Receive One".
+
+Note that one needs to make sure that the sliding window is implemented correctly.
+A typical incorrect implementation is illustrated in Figure~\ref{sliding_incorrect} where frames 1, 2 and 3 should not be resent.
 \figvs{0.4}{sliding_incorrect}{trim=0cm 0cm 0cm 0cm,clip}{Sliding Window ARQ Incorrect Implementation}
 
-As you can see from Figure \ref{sw}, stop and wait ARQ is inefficient because the channel is idle during the period where the sender waits for acknowledgement from the receiver.
-It would be much more efficient if the channel could be kept busy during this waiting period. This is where sliding window ARQ comes in, as illustrated in Figure \ref{sliding},
-which demonstrates how sliding window works on a perfect, errorless channel.
 
-\noindent A sliding window can be implemented on both the sender and the receiver side, but for this lab, we only consider sliding window on the sender side and the receiver still accepts one packet
-at a time, similar to a stop and wait receiver. This makes our protocol behave like  ``send many, receive one''.
-
-\noindent Note that one needs to make sure that the sliding window is implemented correctly. A typical incorrect implementation is illustrated in Figure \ref{sliding_incorrect}
-where frames 1, 2 and 3 should not be resent.
-
+%-------------------------------------------------------------------------------------------------
+\subsubsection{Error Control}
+%-------------------------------------------------------------------------------------------------
+The most basic error control mechanisims in sliding window ARQ are acknowledgement and timeout, much like stop-and-wait.
+Upon receiving the frame with the correct sequence number, the receiver sends back an ACK with the next sequence number.
+The acknowledgements are independently sent to every frame.
+Each frame also has a timer which starts right after the frame is sent.
+If, after some timeout period the frame does not receive its corresponding ACK, the frame is retransmitted.
+As illustrated in Figure~\ref{sliding_error}, frame 0 is retransmitted after some timeout period.
 \figvs{0.4}{sliding_error}{trim=0cm 0cm 0cm 0cm,clip}{Sliding Window ARQ Error Control}
 
-\subsubsection{Error Control}
-The most basic error control mechanisims in sliding window ARQ are acknowledgement and timeout, much like stop and wait. Upon receiving the frame with the correct sequence number,
-the receiver sends back an ACK with the next sequence number. The acknowledgements are independently sent to every frame. Each frame also has a timer which starts right after the 
-frame is sent. If, after some timeout period the frame does not receive its corresponding ACK, the frame is retransmitted. As illustrated in Figure \ref{sliding_error}, frame 0 is retransmitted after
-some timeout period.
+Consider the case in Figure~\ref{ack_multi}. Frames 0,1,2,3 all transmitted successfully but the ACKs are all lost.
+From the senders point of view there is no difference to the case where the frames are lost so frame 0 is retransmitted.
+When the receiver receives frame 0, it should send an acknowledgements for frames 0, 1, 2 and 3 since those frames have all been received.
+However, a more bandwidth efficient way is to use what is called a "culmulative ACK", which the receiver only sends an ACK for frame 3 (ACK 4), which implies that frames 0, 1, 2 3 have all been received, and the sender can immediately start sending frame 4, as illustrated in the figure.
+Note that if the sender does not know about culmulative ACKs it won't be able to talk to the receiver correctly.
+\figvs{0.45}{ack_multi}{trim=0cm 0cm 0cm 0cm,clip}{Culmulative ACK}
 
-\figvs{0.4}{ack_multi}{trim=0cm 0cm 0cm 0cm,clip}{Culmulative ACK}
-Consider the case in Figure \ref{ack_multi}. Frames 0,1,2,3 all transmitted successfully but the ACKs are all lost. From the senders point of view there is no difference to the case where the frames
-are lost so frame 0 is retransmitted. When the receiver receives frame 0, it should send an acknowledgements for frames 0, 1, 2 and 3 since those frames have all been received. However, a more 
-bandwidth efficient way is to use what is called a "culmulative ack", which the receiver only sends an ACK for frame 3 (ACK 4), which implies that frames 0, 1, 2 3 have all been received, and the sender
-can immediately start sending frame 4, as illustrated in the figure. Note that if the sender does not know about culmulative acks it won't be able to talk to the receiver correctly.
+In very much exactly the same way, if an ACK for a certain frame is received it is implied that all frames earlier than that frame are received, even if their ACKs don't arrive, as illustrated in Figure~\ref{ack_multi_handle}.
+Upon receiving the ACK, the sender can immediately start transmitting the next frame.
+\figvs{0.45}{ack_multi_handle}{trim=0cm 0cm 0cm 0cm,clip}{Culmulative ACK Handling}
 
-\figvs{0.4}{ack_multi_handle}{trim=0cm 0cm 0cm 0cm,clip}{Culmulative ACK Handling}
-In very much exactly the same way, if an ACK for a certain frame is received it is implied that all frames earlier than that frame are received, even if their ACKs don't arrive, as illustrated in Figure
-\ref{ack_multi_handle}. Upon receiving the ACK, the sender can immediately start transmitting the next frame.
+There is an implementation detail on what the sender should do upon receiving a culmulative ACK in half way through transmitting the send window.
+The best implementation is of course that in Figure~\ref{ack_multi_handle}, where the sender aborts the current send window and immediately start sending the frame with the correct sequence number.
+However, this is sometimes hard to implement. Therefore, in this lab you will do a simpler but less efficient implementation as illustrated in Figure~\ref{ack_multi_handle2}, where the sender is allowed to finish the current send window and then starts sending the correct frame.
+This is less efficient due to extra duplicated frames being sent, but easier to implement.
+\figvs{0.45}{ack_multi_handle2}{trim=0cm 0cm 0cm 0cm,clip}{Culmulative ACK Handling (Simpler Implementation)}
 
-\figvs{0.4}{ack_multi_handle2}{trim=0cm 0cm 0cm 0cm,clip}{Culmulative ACK Handling Simpler implementation}
-There is an implementation detail on what the sender should do upon receiving a culmulative ack in half way through transmitting the send window. The best implementation is of course that in Figure \ref{ack_multi_handle}, where
-the sender aborts the current send window and immediately start sending the frame with the correct sequence number. However, this is sometimes hard to implement. Therefore, in this lab you will do a simpler but less efficient implementation
-as illustrated in Figure \ref{ack_multi_handle2}, where the sender is allowed to finish the current send window and then starts sending the correct frame. This is less efficient due to extra duplicated frames being
-sent, but easier to implement.
-
+Finally, there is one last case we need to cover, which is out of order frames.
+As illustrated in Figure~\ref{nack}, frames 0 is lost, so frames 1, 2, 3 are out of order so the receiver rejects the frame and sends a NACK for the sequence number of the correct frame, in this case, frame 0.
+In our implementation, NACKs are always sent for out of order frames.
 \figvs{0.4}{nack}{trim=0cm 0cm 0cm 0cm,clip}{Out of Order Frames and NACKs}
-Finally, there is one last case we need to cover, which is out of order frames. As illustrated in Figure \ref{nack}, frames 0 is lost, so frames 1, 2, 3 are out of order so the receiver rejects the frame
-and sends a NACK for the sequence number of the correct frame, in this case, frame 0. In our implementation, NACKs are always sent for out of order frames.
 
-\noindent Note that the NACK here in this lab might not be what you think it is. It is just called NACK to distinguish it from an ACK. Implementation-wise there is no difference between a NACK and a resend
-of the ``ACK'' for the last received frame. So to some extent NACKs in our context is no different than cumulative ACKs except that it is sending ACKs for frames in the past instead of frames in the future.
-In real life, however, NACKs may be really 'NACKs' indicating that the there is something wrong with the frame (e.g. corruption), but you don't have to worry about that in this lab. You can assume that
-if a  frame arrives at the receiver it always arrives without error.
+Note that the NACK here in this lab might not be what you think it is. It is just called NACK to distinguish it from an ACK.
+Implementation-wise there is no difference between a NACK and a resend of the "ACK" for the last received frame.
+So to some extent NACKs in our context is no different than cumulative ACKs except that it is sending ACKs for frames in the past instead of frames in the future.
+In real life, however, NACKs may be really `NACKs' indicating that the there is something wrong with the frame (e.g. corruption), but you don't have to worry about that in this lab. You can assume that if a frame arrives at the receiver it always arrives without error.
 
 \think{If we do not send any NACKs, does the sliding window ARQ still work? If the answer is yes, what mechanism will it rely on for the sender to know to re-transmit the correct frame and why are NACKs useful then?}
 
+%-------------------------------------------------------------------------------------------------
 \subsection{Implement the Sliding Window ARQ}
-Based on what you've learnt far, implement the '\_arq\_send' function in 'slidingwindowsender.py'. During the debugging stage, it is recommended to test transmitting "text\_file\_small.txt" with "frame-size" 1 and "--debug" on. (However, the DEBUG messages on the sender side needs to be implemented by you). After testing your code on the small test case, test sending the binary\_file\_large file using a frame-size of 1024 and 5\% channel loss both direction. After the transmission is done, use the diff command to make sure that the file is transmitted successfully.
+%-------------------------------------------------------------------------------------------------
+Based on what you've learnt far, implement the \texttt{\_arq\_send} function in \texttt{slidingwindowsender.py}.
+During the debugging stage, it is recommended to test transmitting \texttt{text\_file\_small.txt} with frame size of 1 and \texttt{-{}-debug} on.
+(However, the DEBUG messages on the sender side needs to be implemented by you).
+After testing your code on the small test case, test sending the \texttt{binary\_file\_large} file using a frame size of 1024 and 5\% channel loss in both directions.
+After the transmission is done, use the \texttt{diff} command to make sure that the file is transmitted successfully.
 
-\hint{If you get stuck, go back to take a look at client\_improved.py in the example directory and understand it in detail. A lot of the ideas used in that progam are directly applicable to implementing sliding window ARQ.}
-\hint{You can debug whether your code follows the protocol correctly by inserting ``print'' statements in your code and transmit ''text\_file\_small.txt'' with frame-size 1 and turn \texttt{--}debug option on on the receiver side.}
+\hint{If you get stuck, go back to take a look at \texttt{client\_improved.py} in the example directory and understand it in detail. A lot of the ideas used in that progam are directly applicable to implementing sliding window ARQ.}
+%\hint{You can check whether your code follows the protocol correctly by inserting \texttt{print} statements in your code and transmit \texttt{text\_file\_small.txt} with a frame size of 1 while running the receiver with the \texttt{-{}-debug} option.}
 
-
+%-------------------------------------------------------------------------------------------------
 \subsection{Getting the Optimal Window Size}
-
+%-------------------------------------------------------------------------------------------------
 Start with the following configuration:
-\begin{lstlisting}[caption={Sliding Window Configuration}]
+\begin{lstlisting}[style=ece361-shell-base, caption={Sliding Window Configuration}]
 {
     "sender_address": "192.168.1.2",
     "receiver_address": "192.168.1.1",
@@ -549,20 +649,30 @@ Start with the following configuration:
 }
 \end{lstlisting}
 
-Try transmiting the ``binary\_file\_large'' file. First set the window size to 2. Do you see an improved performance compared to Stop and Wait? If you keep increasing the window size, what do you see? Can you explain why? Can you find an optimal window size? What is your minimum file transmission time?
+Transmit the \texttt{binary\_file\_large} file.
+Do you see an improved performance compared to Stop-and-Wait?
+\think{If you keep increasing the window size, what do you see? Can you explain why?}
+\work{Your task is to find an optimal window size. What is your minimum file transmission time?}
 
-If you have time feel free to experiment with any files you like. (images, videos etc.)
-
+Feel free to experiment with any files you like (e.g. images, videos etc.). When you open the images, do you see corruption?
 
 %-------------------------------------------------------------------------------------------------
 \section{Testing}
+%-------------------------------------------------------------------------------------------------
+
+%-------------------------------------------------------------------------------------------------
 \subsection{Goal}
-Your target is to transmit the ``binary\_file\_large'' file under 10 seconds, on a channel with 5\% loss both way, and a frame-size of 1024. Your sliding window ARQ implementation has to conform to descriptions in Section \ref{sec:protocol}. We will also test with an optimal window-size. We will not only test the time it takes to transmit the file but also test every aspect of the protocol described in Section \ref{sec:protocol}, so make sure you test your code thoroughly. Our additional tests for protocol conformation may change parameters such as channel loss, frame-size, and window-size, so you should test with different parameters, not just the ones given to you in the lab.
+%-------------------------------------------------------------------------------------------------
+Your target is to transmit the \texttt{binary\_file\_large} file under 10 seconds, on a channel with 5\% loss both ways, and a frame size of 1024.
+Your sliding window ARQ implementation has to conform to descriptions in Section~\ref{sec:protocol}.
+We will also test with an optimal window size.
+We will not only test the time it takes to transmit the file but also test every aspect of the protocol described in Section~\ref{sec:protocol}, so make sure you test your code thoroughly.
+Our additional tests for protocol conformation may change parameters such as channel loss, frame size, and window size, so you should test with different parameters, not just the ones given to you in the lab.
 
 \subsection{Exerciser}
 \label{sec:exercise}
 %-------------------------------------------------------------------------------------------------
-You can use the exerciser to help test the correctness of your implementation. The exerciser will run a set of public test cases against your code. However, note that the tests in the exerciser is not complete and it is your responsibility to test your code to make sure it conforms to Section \ref{sec:protocol}. 
+You can use the exerciser to help test the correctness of your implementation. The exerciser will run a set of public test cases against your code. However, note that the tests in the exerciser is not complete and it is your responsibility to test your code to make sure it conforms to Section~\ref{sec:protocol}.
 Ensure you have the following files all within the same directory:
 \begin{itemize}
     \item \textbf{stopandwaitsender.py}: Your completed stop-and-wait sender code from section~\textbf{TODO}.
@@ -585,19 +695,29 @@ You can then verify the submission by typing \texttt{ece361-submit list \thelab}
 
 At some point after the lab's due date, private test cases will be run against your submission to calculate your final mark.
 
+%-------------------------------------------------------------------------------------------------
+\newpage
 \appendix
 \section{Appendix}
 \label{sec:appendix}
+%-------------------------------------------------------------------------------------------------
+
+%-------------------------------------------------------------------------------------------------
 \subsection{The Frame Class}
+%-------------------------------------------------------------------------------------------------
 In lab 1 you worked with a Socket class. In this lab you will be working with a Frame class which encapsulates the concept of a frame. For this lab we have encapsulated all the functionalities in this class so you do not need to work with sockets directly.
 
+%-------------------------------------------------------------------------------------------------
 \subsection{Importing the Library}
+%-------------------------------------------------------------------------------------------------
 Similar to lab 1 you will need an ``import'' statement in order to use the library:
 \begin{lstlisting}[caption={Import Statement}, language=python]
 from ece361.lab2.frame import Frame
 \end{lstlisting}
 
+%-------------------------------------------------------------------------------------------------
 \subsection{Creation}
+%-------------------------------------------------------------------------------------------------
 To create a Frame class object, at least 2 parameters are required: seqnum (sequence number) and data, which are self explanatory. The other parameters are optional and illustrated below:
 \begin{lstlisting}[caption={Frame Object Instantiation}, language=python]
 # Instantiate a new Frame object
@@ -615,44 +735,67 @@ new_frame = Frame(
                   )
 \end{lstlisting}
 
+%-------------------------------------------------------------------------------------------------
 \subsection{Methods you Need in Order to Complete the Lab}
+%-------------------------------------------------------------------------------------------------
 
+%-------------------------------------------------------------------------------------------------
 \subsubsection{status()}
+%-------------------------------------------------------------------------------------------------
 This is one of the key methods for completing this lab. It is for checking the current status of the frame object. A frame can be in one of the following 4 states: notsent, inflight, timedout, ack\_nacked. To check the current status of the frame object, you need to write something like the following, assuming a Frame object called ``frame'' exists:
 \begin{lstlisting}[caption={Frame status}, language=python]
 if (frame.status() == Frame.Status.notsent):
     ...
 \end{lstlisting}
 
+%-------------------------------------------------------------------------------------------------
 \subsubsection{send()}
+%-------------------------------------------------------------------------------------------------
 As the name suggests, this method sends the frame to its destination. It only works if the destination field is not empty when the Frame was created. Note that unlike lab 1, there is no need to pass in the destination address since we assume that a Frame's destination is determined upon creation (and cannot be modified). If you want to send to a different destination you have to
 create a new Frame object.
 
+%-------------------------------------------------------------------------------------------------
 \subsubsection{wait\_for\_ack\_nack()}
+%-------------------------------------------------------------------------------------------------
 This method will block until an ACK/NACK for the frame comes back.
 
+%-------------------------------------------------------------------------------------------------
 \subsubsection{wait\_for\_multiple\_ack\_nacks(frames\_list)}
+%-------------------------------------------------------------------------------------------------
 This is an essential function for completing Section \ref{sec:sliding} of the lab. This is the ``non-blocking'' counterpart of wait\_for\_ack\_nack(), where a list of frames is passed in and will return if any of the frames in the list receives an ACK/NACK. If none of the frames in frames\_list receive an ACK/NACK then this function will block. This is a static function. In order to use it one needs to proceed its name with ``Frame'':
 \begin{lstlisting}[caption={Frame status}, language=python]
 Frame.wait_for_multiple_ack_nacks(frames_list)
 \end{lstlisting}
 Note that although this function returns when at least one the frames gets an ack, it does not tell which frame(s) in the frames\_list is acknowledged. After this function returns one needs to go through the entire frames\_list again and check the status of each to know which ones got acknowledged.
 
+%-------------------------------------------------------------------------------------------------
 \subsubsection{Other Methods}
+%-------------------------------------------------------------------------------------------------
 The following methods you do not need for completing your part of the lab, but are used in skeleton/example code so are included here for reference purposes:
 
+%-------------------------------------------------------------------------------------------------
 \subsubsection{sendtime()}
+%-------------------------------------------------------------------------------------------------
 returns a datetime object indicating the time the frame object is sent. If there are multiple send attempts returns the time for the most recent send attempt. Returns None if frame was never sent.
 
+%-------------------------------------------------------------------------------------------------
 \subsubsection{retrieve\_ack\_nack()}
+%-------------------------------------------------------------------------------------------------
 retrieves the ACK/NACK of the frame (if ACK/NACKED), which is a number. This method only works if the frame is in ack\_nacked state. Since there are no true NACKs in this lab you do not really need this function because ACK is always the next sequence number. Making sure the frame is in ack\_nacked state is sufficient.
 
+%-------------------------------------------------------------------------------------------------
 \subsubsection{acktime()}
+%-------------------------------------------------------------------------------------------------
 returns a datetime object indicating the time where the frame is acknowledged. returns None if no acknowledgement has come back.
 
+%-------------------------------------------------------------------------------------------------
 \subsubsection{pack\_data()}
+%-------------------------------------------------------------------------------------------------
 returns the raw ``packed'' version of the frame object, which is a sequence of bytes with first 4 bytes being the sequence number followed by frame data. The ``packed'' version is useful for transmitting the frame over the network.
 
+%-------------------------------------------------------------------------------------------------
 \subsubsection{unpack\_data()}
+%-------------------------------------------------------------------------------------------------
 This is exactly the opposite of pack\_data() where a sequence of bytes is converted to a Frame object, assuming the same format: 4 bytes sequence number followed by data. Each time this method is called a new Frame object is returned.
+
 \end{document}
