@@ -139,7 +139,7 @@ Running \texttt{ifconfig} as shown, note the interface has an IP of \texttt{192.
 %You might have guessed it, 2 namespaces, h1 and h2 are created and we opened a bash shell within each namespace. Now, we can find out about each namespace using the utility commands introduced in lab 1. For example, in terminal 1, run:
 %The first entry is the loopback interface which is created by default when the namespace gets created. The second entry veth1 is the most important. It is created for communication between h1 and h2. As you can see, in the h1 interface the ip address associated with veth1 is 192.168.1.1. Similarly, the ip address for h2 is 192.168.1.2.
 
-To test the communication between virtual hosts h1 and h2, first enter h1 on an open terminal, and ping\footnote{"ping" is a simple command-line utility to test connectivity between hosts. Additionally, "Ping" is often used as a verb.} \texttt{192.168.1.2}.
+To test the communication between virtual hosts h1 and h2, first enter h1 on an open terminal, and ping\footnote{"ping" is a command-line utility to test connectivity between hosts. It is also often used as a verb.} \texttt{192.168.1.2}.
 If the virtual network is functioning correctly, the ping should work, as seen in listing~\ref{lst:ping-h2}.
 
 \begin{lstlisting}[style=ece361shell, caption={Pinging h2 from within h1.}, label={lst:ping-h2}]
@@ -222,8 +222,7 @@ In the last lab, you were asked to manually split a large file into smaller segm
 \subsubsection{Simple Stop and Wait}
 We have implemented a stop and wait protocol similar to that of lab 1 that will work on an errorless channel. First set the following configuration:
 
-\begin{minipage}{\linewidth}
-\begin{lstlisting}[caption={Configuration For Small File}]
+\begin{lstlisting}[style=ece361-shell-base, caption={Configuration For Small File}]
 {
     "sender_address": "192.168.1.2",
     "receiver_address": "192.168.1.1",
@@ -235,27 +234,26 @@ We have implemented a stop and wait protocol similar to that of lab 1 that will 
     "maxseqnum": 0
 }
 \end{lstlisting}
-\end{minipage}
 
 In this part we assume an errorless channel. Remove packet drop:
-\begin{lstlisting}[language=bash]
-$ sudo tc qdisc change dev veth0 root netem loss 0%
-$ sudo tc qdisc change dev veth2 root netem loss 0%
+\begin{lstlisting}[style=ece361shell, caption={Setting packet loss to 0\% in both directions.}]
+ubuntu@ece361:~/lab2$ ./lab2-adjustLoss h1 0%
+ubuntu@ece361:~/lab2$ ./lab2-adjustLoss h2 0%
 \end{lstlisting}
 Now run the following:
 
 From the h1 terminal:
-\begin{lstlisting}[language=bash]
-$ python3 receiver.py received.txt
+\begin{lstlisting}[style=ece361-shell-base]
+ubuntu@ece361-h1:~/lab2$ python3 receiver.py received.txt
 \end{lstlisting}
 From the h2 terminal:
-\begin{lstlisting}[language=bash]
-$ python3 sender.py text_file_small.txt
+\begin{lstlisting}[style=ece361-shell-base]
+ubuntu@ece361-h2:~/lab2$ python3 sender.py text_file_small.txt
 \end{lstlisting}
 Since the receiver is just a server that always listens to incoming packets, it does not know when the transmission ends. Therefore, you need to Ctrl-C the receiver before proceeding. This applies to all sections of the lab.
 The sender should finish (If the sender doesn't exit by itself, Ctrl-C it). Verify that the file gets transmitted successfully:
-\begin{lstlisting}[language=bash]
-$ cat received.txt
+\begin{lstlisting}[style=ece361-shell-base]
+ubuntu@ece361-h1:~/lab2$ cat received.txt
 I only have a few bytes.
 \end{lstlisting}
 
@@ -263,19 +261,19 @@ I only have a few bytes.
 We have provided you with a feature that prints out the progress on the sender and receiver frame by frame. This is very useful for later on for either debugging your code or just to understand how the protocol works. Try the following:
 
 From the h1 terminal:
-\begin{lstlisting}[language=bash]
-$ python3 receiver.py --debug received.txt
+\begin{lstlisting}[style=ece361-shell-base]
+ubuntu@ece361-h1:~/lab2$ python3 receiver.py --debug received.txt
 \end{lstlisting}
 From the h2 terminal:
-\begin{lstlisting}[language=bash]
-$ python3 sender.py --debug text_file_small.txt
+\begin{lstlisting}[style=ece361-shell-base]
+ubuntu@ece361-h2:~/lab2$ python3 sender.py --debug text_file_small.txt
 \end{lstlisting}
 
 Try understanding the debug message. It shouldn't be too hard since this is just a simple stop and wait and you implemented the same algorithm in lab 1. However, later on when the algorithm gets more complicated this will become more useful.
 
 \subsection{Round Trip Time}
 Now let's try a larger file. For larger files we need to increase the frame-size so the transmission doesn't take forever. Let's change the frame-size to 1024 (or 1K bytes):
-\begin{lstlisting}[caption={Configuration For Large File}]
+\begin{lstlisting}[style=ece361-shell-base, caption={Configuration For Large File}]
 {
     "sender_address": "192.168.1.2",
     "receiver_address": "192.168.1.1",
@@ -290,24 +288,24 @@ Now let's try a larger file. For larger files we need to increase the frame-size
 Run the following:
 
 From the h1 terminal:
-\begin{lstlisting}[language=bash]
-$ python3 receiver.py received
+\begin{lstlisting}[style=ece361-shell-base]
+ubuntu@ece361-h1:~/lab2$ python3 receiver.py received
 \end{lstlisting}
 From the h2 terminal:
-\begin{lstlisting}[language=bash]
-$ python3 sender.py binary_file_large
+\begin{lstlisting}[style=ece361-shell-base]
+ubuntu@ece361-h2:~/lab2$ python3 sender.py binary_file_large
 \end{lstlisting}
 
 \warn{Do not use the '--debug' option when sending large files! The debug messages will flood your screen.}
 
 Verify that the file get transmitted successfully, this time with a diff:
-\begin{lstlisting}[language=bash]
-$ diff binary_file_large received
+\begin{lstlisting}[style=ece361-shell-base]
+ubuntu@ece361-h1:~/lab2$ diff binary_file_large received
 \end{lstlisting}
 
 Note that when the transmission ends the sender prints out some statistics:
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[style=ece361-shell-base]
 ARQ protocol: stopandwait
 frames sent: 9106
 frames delivered: 9106
@@ -320,13 +318,13 @@ We have implemented the 'frames sent', 'frames delivered' and 'transmission time
 
 \subsection{Handling Frame Drop}
 After you get the basic stop and wait working, enable frame drop from h2 to h1. Keep the channel from h1 to h2 errorless for now. For example, set the frame drop rate to 5\%:
-\begin{lstlisting}[language=bash]
-sudo tc qdisc change dev veth0 root netem loss 5%
+\begin{lstlisting}[style=ece361-shell-base]
+ubuntu@ece361:~/lab2$ ./lab2-adjustLoss h1 5%
 \end{lstlisting}
 Let's change the frame-size back to 1 for now:
 
 \begin{minipage}{\linewidth}
-\begin{lstlisting}[caption={Configuration For Large File}]
+\begin{lstlisting}[style=ece361-shell-base, caption={Configuration For Large File}]
 {
     "sender_address": "192.168.1.2",
     "receiver_address": "192.168.1.1",
@@ -353,12 +351,12 @@ In the previous experiment you saw that the prgram hang because if a frame is lo
 
 \subsection {Handling Lost Ack}
 Now let's enable frame lost from h1 to h2 as well.
-\begin{lstlisting}[language=bash]
-sudo tc qdisc change dev veth2 root netem loss 5%
+\begin{lstlisting}[style=ece361-shell-base]
+ubuntu@ece361:~/lab2$ ./lab2-adjustLoss h2 5%
 \end{lstlisting}
 
 Change the frame-size configuration back to 1:
-\begin{lstlisting}[caption={Configuration For Large File}]
+\begin{lstlisting}[style=ece361-shell-base, caption={Configuration For Large File}]
 {
     "sender_address": "192.168.1.2",
     "receiver_address": "192.168.1.1",
@@ -372,15 +370,15 @@ Change the frame-size configuration back to 1:
 \end{lstlisting}
 Now rerun the text\_file\_small.txt experiment and examine the result. You should see something like this:
 
-\begin{lstlisting}[language=bash]
-$ cat received.txt
+\begin{lstlisting}[style=ece361-shell-base]
+ubuntu@ece361-h1:~/lab2$ cat received.txt
 I only havee a few bytess.
 \end{lstlisting}
 The actual result varies from run to run, but the key here is duplicated frames. If you don't see duplicated frames then try again. If you still can't see it then you might want to increase the frame drop rate (e.g. from 5% to 10%).
 
 To explain what happened, since the ack frame can be lost, the next frame the receiver received can either be a resend of the previous frame (due to lost ack) or a new frame (if ack successfully received by the sender). Without sequence numbers the receiver cannot distinguish betweeen these two cases. The sequence numbers are actually implemented already, you just need to enable it in the config. Set the "maxseqnum" field of the config file to any positive integer (e.g. 64).
 
-\begin{lstlisting}[caption={Configuration For Large File}]
+\begin{lstlisting}[style=ece361-shell-base, caption={Configuration For Large File}]
 {
     "sender_address": "192.168.1.2",
     "receiver_address": "192.168.1.1",
@@ -397,7 +395,7 @@ Now rerun the 'text\_file\_small.txt' experiment and you should see that the fil
 
 Finally, let's test the fully implemented stop and wait ARQ protocol on binary\_file\_large. Set the 'frame-size' back to 1024:
 
-\begin{lstlisting}[caption={Configuration For Large File}]
+\begin{lstlisting}[style=ece361-shell-base, caption={Configuration For Large File}]
 {
     "sender_address": "192.168.1.2",
     "receiver_address": "192.168.1.1",
@@ -410,17 +408,17 @@ Finally, let's test the fully implemented stop and wait ARQ protocol on binary\_
 }
 \end{lstlisting}
 From the h1 terminal:
-\begin{lstlisting}[language=bash]
-$ python3 receiver.py received
+\begin{lstlisting}[style=ece361-shell-base]
+ubuntu@ece361-h1:~/lab2$ python3 receiver.py received
 \end{lstlisting}
 From the h2 terminal:
-\begin{lstlisting}[language=bash]
-$ python3 sender.py binary_file_large
+\begin{lstlisting}[style=ece361-shell-base]
+ubuntu@ece361-h2:~/lab2$ python3 sender.py binary_file_large
 \end{lstlisting}
 
 \noindent You might need to wait for a while for the transmission to finish. Verify that the file gets transmitted successfully using diff.
-\begin{lstlisting}[language=bash]
-$ diff binary_file_large received
+\begin{lstlisting}[style=ece361-shell-base]
+ubuntu@ece361-h1:~/lab2$ diff binary_file_large received
 \end{lstlisting}
 
 \noindent If the previous experiment succeeds, congratulations! You have a fully working stop and wait ARQ.
@@ -430,7 +428,7 @@ $ diff binary_file_large received
 \subsection{Change the Config File to Use Sliding Window ARQ}
 Change the "arq\_protocol" field of the config file from "stopandwait" to "slidingwindow". Make sure "window-size" is an integer greater than 1. Make sure "maxseqnum" is at least "window-size" (why?). Keep other parameters (e.g. timeout) the same as previous section:
 
-\begin{lstlisting}[caption={Sliding Window Configuration}]
+\begin{lstlisting}[style=ece361-shell-base, caption={Sliding Window Configuration}]
 {
     "sender_address": "192.168.1.2",
     "receiver_address": "192.168.1.1",
@@ -448,12 +446,12 @@ Change the "arq\_protocol" field of the config file from "stopandwait" to "slidi
 Try running the 'text\_file\_small.txt' experiment with '\texttt{--}debug' the same way as before:
 
 \noindent From the h1 terminal:
-\begin{lstlisting}[language=bash]
-$ python3 receiver.py --debug received.txt
+\begin{lstlisting}[style=ece361-shell-base]
+ubuntu@ece361-h1:~/lab2$ python3 receiver.py --debug received.txt
 \end{lstlisting}
 From the h2 terminal:
-\begin{lstlisting}[language=bash]
-$ python3 sender.py --debug text_file_small.txt
+\begin{lstlisting}[style=ece361-shell-base]
+ubuntu@ece361-h2:~/lab2$ python3 sender.py --debug text_file_small.txt
 \end{lstlisting}
 
 As you can see, the programs seem to be hanging without any debug outputs, which means no frame is being sent or received. This shouldn't surprise you since sliding window ARQ has not been implemented yet! Open the file slidingwindowsender.py and find the \_arqsend method. We have started the implementation for you by creating a send queue and your task is to complete the method. Apart from this method, the rest of the sender functions and the receiver are already implemented for you. We have given you some high level guidelines on what to do as well in the comments. Briefly go through the comments to have an idea of what needs to be done, but before you start coding, you must read the next section for a detailed description of our implementation of the sliding window protocol, which might differ in a few minor details from what you have learned.
@@ -517,7 +515,7 @@ Based on what you've learnt far, implement the '\_arq\_send' function in 'slidin
 \subsection{Getting the Optimal Transmission Time}
 
 Start with the following configuration:
-\begin{lstlisting}[caption={Sliding Window Configuration}]
+\begin{lstlisting}[style=ece361-shell-base, caption={Sliding Window Configuration}]
 {
     "sender_address": "192.168.1.2",
     "receiver_address": "192.168.1.1",
@@ -534,8 +532,8 @@ First set the window size to 2. Do you see an improved performance compared to S
 
 \section{Cleanup}
 After finishing the lab, please run:
-\begin{lstlisting}[language=bash]
-$ sudo sh setup_scripts/lab2_cleanup.sh
+\begin{lstlisting}[style=ece361-shell-base]
+ubuntu@ece361:~$ ece361-cleanup
 \end{lstlisting}
 
 %-------------------------------------------------------------------------------------------------
