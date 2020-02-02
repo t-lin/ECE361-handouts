@@ -63,7 +63,7 @@ In your lab \thelab~working directory, you should have the following files:
 
     \item \texttt{example} directory, with \texttt{client\_improved.py}, \texttt{client\_simple.py}, and \texttt{server.py} within
         \begin{itemize}
-            \item Sample code showing how to use the \texttt{select()} call in Python
+            \item Sample code showing how to use the \texttt{ece361} library code (documented in Appendix~\ref{sec:appendix})
         \end{itemize}
 
     \item \texttt{sender.py} and \texttt{receiver.py}
@@ -205,7 +205,7 @@ UDP buffer size:  208 KByte (default)
 [  3]  0.0-10.0 sec  6 datagrams received out-of-order
 \end{lstlisting}
 
-After this test, you may kill the \texttt{iperf} server in the h1 terminal by pressing Ctrl+C.
+After this test, you may kill the \texttt{iperf} server in the h1 terminal by pressing \texttt{Ctrl+C}.
 
 \point{For the remainder of this lab, we assume you have opened at least 3 terminals: one outside of the virtual hosts, one within host h1, and the other within host h2.}
 
@@ -225,44 +225,48 @@ After this test, you may kill the \texttt{iperf} server in the h1 terminal by pr
 \section{A Simple Example}
 \label{sec:example}
 %-------------------------------------------------------------------------------------------------
-Before starting this section it is highly recommended that you go through Appendix~\ref{sec:appendix} to get familiar with the lab 2 library we provided to you.
+\work{Before starting this section, it is highly recommended that you go through Appendix~\ref{sec:appendix} to get familiar with the lab 2 library we provided to you.}
 
-We have provided you with a simplified example (with source code) to illustrate some of the concepts of this lab. 'cd' into the 'examples' directory on all 3 terminals.
+We have provided you with a simplified example to illustrate some of the concepts of this lab.
+In all 3 terminals, browse into the \texttt{example} directory.
 
-We need some frames to be dropped for this example to be meaningful, so add some drop rate: (make sure you run this command in the terminal outside of the virtual hosts)
-\begin{lstlisting}[style=ece361shell]
+We need some frames to be dropped for this example to be meaningful. Add a drop rate of 20\% to both hosts.
+\begin{lstlisting}[style=ece361shell, caption={}]
 ubuntu@ece361:~/lab2/example$ ./lab2-adjustLoss h1 20%
 ubuntu@ece361:~/lab2/example$ ./lab2-adjustLoss h2 20%
 \end{lstlisting}
 
-Now from the h1 terminal, run:
-\begin{lstlisting}[style=ece361shell, caption={}]
-ubuntu@ece361-h1:~/lab2/example$ python server.py
+Now from the h1 terminal, run: \texttt{python3 server.py}.
+This starts a simple server on host h1. This server is a simple receiver that will reply to each frame it receives with an ACK contianing the next sequence number it expects.
+%\begin{lstlisting}[style=ece361shell, caption={}]
+%ubuntu@ece361-h1:~/lab2/example$ python3 server.py
+%\end{lstlisting}
+
+Now from the h2 terminal, run: \texttt{python3 client\_simple.py}
+This simple client, which uses the stop-and-wait ARQ protocol, will transmit 10 frames and report which ones got ACKed and which ones timed out.
+The timeout is hardcoded to 1 second. When the client program finishes, it prints out the result like that seen in listing~\ref{lst:client-stats}.
+%\begin{lstlisting}[style=ece361shell, caption={}]
+%ubuntu@ece361-h2:~/lab2/example$ python3 client_simple.py
+%\end{lstlisting}
+\begin{lstlisting}[style=ece361shell, caption={}, label={lst:client-stats}]
+Frames delivered: 8
+Frames timedout: 2
+Total transmission time: 0:00:02.025744
 \end{lstlisting}
 
-This starts a simple server on host h1. This server is like a receiver which will acknowledge any frame it receives with the next sequence number however it does not write any received data to disk.
+As you can see, in this implementation, the total transmission time depends on the number of frames that time out.
+The more frames that time out, the longer it takes for the client to complete the task.
+By using stop-and-wait ARQ, the client must wait for the acknowledgement of each frame before sending the next one.
+Thus, this implementation is quite inefficient.
 
-Now from the h2 terminal, run:
-\begin{lstlisting}[style=ece361shell, caption={}]
-ubuntu@ece361-h2:~/lab2/example$ python client_simple.py
-\end{lstlisting}
+To see an improved client implementation, run \texttt{python3 client\_improved.py} in h2. You may keep the server in h1 running.
+%\begin{lstlisting}[style=ece361shell, caption={}]
+%ubuntu@ece361-h2:~/lab2/example$ python3 client_improved.py
+%\end{lstlisting}
 
-The client's job is to attempt to transmit 10 frames and reports which ones got acked and which ones timed out. The timeout is hardcoded to 1 second. When the client program finishes, it prints out the result:
+The output should look something like this:
 \begin{lstlisting}[style=ece361shell, caption={}]
-frames delivered: 8
-frames timedout: 2
-total transmission time: 0:00:02.025744
-\end{lstlisting}
-As you can see, in this implementation, the total transmission time depends on the number of frames that time out. The more timed-out frames, the longer it takes for the client to complete the task. It is because this client is using a ``stop and wait'' implementation, waiting for the acknowledgement of each frame before proceeding to the next one. As you can see, this implementation is quite inefficient.
-
-Now from the h2 terminal, run (you can keep the server running):
-\begin{lstlisting}[style=ece361shell, caption={}]
-ubuntu@ece361-h2:~/lab2/example$ python client_improved.py
-\end{lstlisting}
-
-The output will look something like this:
-\begin{lstlisting}[style=ece361shell, caption={}]
-ubuntu@ece361-h2:~/lab2/example$ python client_improved.py
+ubuntu@ece361-h2:~/lab2/example$ python3 client_improved.py
 b'This is message # 5' DELIVERED. ACK: 6 rtt: 0:00:00.002422
 b'This is message # 4' DELIVERED. ACK: 5 rtt: 0:00:00.003443
 b'This is message # 2' DELIVERED. ACK: 3 rtt: 0:00:00.004136
@@ -273,21 +277,31 @@ b'This is message # 3' TIMED OUT.
 b'This is message # 1' TIMED OUT.
 b'This is message # 6' TIMED OUT.
 b'This is message # 7' TIMED OUT.
-frames delivered: 6
-frames timedout: 4
-total transmission time: 0:00:01.004118
+Frames delivered: 6
+Frames timedout: 4
+Total transmission time: 0:00:01.004118
 \end{lstlisting}
 
-First note that the acknowledgements no longer come in order. More importantly, the total transmission time is at most 1 timeout period regardless of the number of frames time out. This is an improvement over client\_simple.py. In order to achieve this performance, client\_improved.py no longer transmits the frames in a ``stop and wait'' manner. Instead, it transmits all the frames at once and wait for the acknowledgements at the same time. The same idea can be applied to improving the stop and wait ARQ: transmit more packets in parallel (and wait for multiple acknowledgements at the same time) to keep the channel busy.
+Notice that the acknowledgements no longer come in order.
+More importantly, the total transmission time is at most 1 timeout period regardless of the number of frames that time out.
+%This is an improvement over \texttt{client\_simple.py}.
+To achieve this performance, \texttt{client\_improved.py} no longer uses stop-and-wait.
+Instead, it simultaneously transmits all the frames and then waits for the acknowledgements.
+The same idea can be applied to improving the stop-and-wait ARQ: transmit more packets in parallel (and wait for multiple acknowledgements) to keep the channel busy.
 
-Now open the files 'client\_simple.py' and 'client\_improved.py' and try to understand the code. When in doubt, refer to Appendix \ref{sec:appendix} for more information. You should understand the programs before proceeding to the next section.
+You should have a high-level understanding of these client implementations before proceeding to the next section.
+Open the files \texttt{client\_simple.py} and \texttt{client\_improved.py} and try to understand the code.
+When in doubt, refer to Appendix~\ref{sec:appendix} for more information.
 
+%-------------------------------------------------------------------------------------------------
 \section{Stop and Wait ARQ}
 \label{sec:example}
+%-------------------------------------------------------------------------------------------------
+In this section... \textbf{TODOOOOOO}
 
 \subsection{Simple Stop and Wait}
-We have implemented a stop and wait protocol similar to that of lab 1 that will work on an errorless channel. First open the file ``config.json'' and change it to the following (which should be the default anyway):
-
+We have implemented a stop-and-wait protocol similar to that used in lab 1.
+Open the configuration file, \texttt{config.json}, and make sure it matches the following (which should be the default):
 \begin{lstlisting}[style=ece361-shell-base, caption={Configuration For Small File}]
 {
     "sender_address": "192.168.1.2",
@@ -508,7 +522,7 @@ ubuntu@ece361-h1:~/lab2$ diff binary_file_large received
 \end{lstlisting}
 
 If the previous experiment succeeds, congratulations! You have a fully working stop-and-wait ARQ.
-Now open the \texttt{stopandwaitsender.py} file and have a look at the \texttt{\_arqsend} function.
+Now open the \texttt{stopwaitsender.py} file and have a look at the \texttt{\_arqsend} function.
 You should understand the code at a high level before proceeding to the next section. You only need to understand what the API calls in that function are doing (you do not need to understand the details of how the APIs work under-the-hood).
 Also, you only need to look at that one single function, you do not need to read other parts of the code.
 However, if you are interested, you can read the entire code-base since we made all the source code available to you.
@@ -675,7 +689,7 @@ Our additional tests for protocol conformation may change parameters such as cha
 You can use the exerciser to help test the correctness of your implementation. The exerciser will run a set of public test cases against your code. However, note that the tests in the exerciser is not complete and it is your responsibility to test your code to make sure it conforms to Section~\ref{sec:protocol}.
 Ensure you have the following files all within the same directory:
 \begin{itemize}
-    \item \textbf{stopandwaitsender.py}: Your completed stop-and-wait sender code from section~\textbf{TODO}.
+    \item \textbf{stopwaitsender.py}: Your completed stop-and-wait sender code from section~\textbf{TODO}.
     \item \textbf{slidingwindowsender.py}: Your completed sliding window sender code from section~\textbf{TODO}.
 \end{itemize}
 
