@@ -52,10 +52,40 @@ To activate the virtual environment, run the \texttt{source} command as shown in
 You should see a \texttt{(.venv)} appear in your prompt, confirming the environment is activated.
 \point{You will need to activate the virtual environment \textbf{in each terminal} that runs code belonging to this lab.}
 
-\warn{The \texttt{ece361} library used in this lab is different than the one from lab 1. Your lab 1 code will be unable to run in this new virtual environment}
+\warn{The \texttt{ece361} library used in this lab is different than the one from lab 1. Your lab 1 code will not work in this new virtual environment.}
 
-\textbf{TODO: BRIEFLY DESCRIBE DIRECTORY STRUCTURE AND FILES PROVIDED}
-%You should also notice two sub-directories under the working directory, named \texttt{track1} and \texttt{track2}. These provide the tutorial and starter code for the work you will do in sections~\ref{sec:track1} and~\ref{sec:track2}, respectively.
+In your lab \thelab~working directory, you should have the following files:
+\begin{itemize}
+    \item \texttt{lab2-createNet}, \texttt{lab2-enterHost}, and \texttt{lab2-adjustLoss},
+        \begin{itemize}
+            \item Various scripts for setting up and configuring the lab's virtual network
+        \end{itemize}
+
+    \item \texttt{example} directory, with \texttt{client\_improved.py}, \texttt{client\_simple.py}, and \texttt{server.py} within
+        \begin{itemize}
+            \item Sample code showing how to use the \texttt{select()} call in Python
+        \end{itemize}
+
+    \item \texttt{sender.py} and \texttt{receiver.py}
+        \begin{itemize}
+            \item The primary files you will run during this lab
+        \end{itemize}
+
+    \item \texttt{senderbase.py}, \texttt{stopwaitsender.py}, and \texttt{slidingwindowsender.py}
+        \begin{itemize}
+            \item Base sender class and two derived classes (which you will have to finish implementing)
+        \end{itemize}
+
+    \item \texttt{config.json}
+        \begin{itemize}
+            \item Configuration file that will be read by the sender and receiver
+        \end{itemize}
+
+    \item \texttt{binary\_file\_large} and \texttt{text\_file\_small.txt}
+        \begin{itemize}
+            \item Test files you will use during this lab
+        \end{itemize}
+\end{itemize}
 
 \point{If you discover a bug in any of the files provided, please report it on Piazza.}
 
@@ -63,7 +93,7 @@ You should see a \texttt{(.venv)} appear in your prompt, confirming the environm
 \section{Provided Scripts}
 \label{sec:provided-scripts}
 %-------------------------------------------------------------------------------------------------
-This section will cover how to use the scripts you will use during this lab.
+This section will provide an overview of the scripts provided to you as part of this lab, and show examples of their usage.
 
 %-------------------------------------------------------------------------------------------------
 \subsection{Virtual Network}
@@ -113,7 +143,7 @@ To test the communication between virtual hosts h1 and h2, first enter h1 on an 
 If the virtual network is functioning correctly, the ping should work, as seen in listing~\ref{lst:ping-h2}.
 
 \begin{lstlisting}[style=ece361shell, caption={Pinging h2 from within h1.}, label={lst:ping-h2}]
-ubuntu@ece361-h1:~/lab2$ ping -c4 192.168.1.2
+ubuntu@ece361-h1:~/lab2$ ping -c 4 192.168.1.2
 PING 192.168.1.2 (192.168.1.2) 56(84) bytes of data.
 64 bytes from 192.168.1.2: icmp_seq=1 ttl=64 time=0.056 ms
 64 bytes from 192.168.1.2: icmp_seq=2 ttl=64 time=0.060 ms
@@ -131,29 +161,52 @@ rtt min/avg/max/mdev = 0.046/0.059/0.076/0.013 ms
 \subsection{Emulating Packet Loss}
 %-------------------------------------------------------------------------------------------------
 To see the effects of ARQ, we need an unreliable channel between the two virtual hosts.
-To emulate packet loss, we have provided a script called \texttt{lab2-adjustLoss} which allows you to control the loss rate of packets leaving a particular host.
-For example, you can emulate a packet loss rates for only packets leaving h1, or for h2 to h1.
+To emulate packet loss, we have provided a script called \texttt{lab2-adjustLoss} which allows you to control the loss rate of packets entering a particular host.
+For example, listing~\ref{lst:adjust-loss} shows how to set a packet loss rate of 10\% for packets entering h1.
 
-\warn{The \texttt{lab2-adjustLoss} script will \textbf{not} work if the terminal is within a virtual host.}
+\warn{The \texttt{lab2-adjustLoss} script will \textbf{not} work if the terminal is within a virtual host, so double-check your prompt.}
 
-\begin{lstlisting}[style=ece361shell, caption={Emulating packet loss.}, label={lst:adjust-loss}]
-ubuntu@ece361:~/lab2$ ./lab2-adjustLoss h1 20%
-ubuntu@ece361:~/lab2$ ./lab2-enterHost h1
-ubuntu@ece361-h1:~/lab2$ ping -c 10 192.168.1.2
-PING 192.168.1.2 (192.168.1.2) 56(84) bytes of data.
-64 bytes from 192.168.1.2: icmp_seq=2 ttl=64 time=0.932 ms
-64 bytes from 192.168.1.2: icmp_seq=3 ttl=64 time=0.195 ms
-64 bytes from 192.168.1.2: icmp_seq=4 ttl=64 time=0.049 ms
-64 bytes from 192.168.1.2: icmp_seq=5 ttl=64 time=0.051 ms
-64 bytes from 192.168.1.2: icmp_seq=6 ttl=64 time=0.047 ms
-64 bytes from 192.168.1.2: icmp_seq=7 ttl=64 time=0.039 ms
-64 bytes from 192.168.1.2: icmp_seq=8 ttl=64 time=0.061 ms
-64 bytes from 192.168.1.2: icmp_seq=9 ttl=64 time=0.060 ms
-
---- 192.168.1.2 ping statistics ---
-10 packets transmitted, 8 received, 20% packet loss, time 9000ms
-rtt min/avg/max/mdev = 0.039/0.179/0.932/0.288 ms
+\begin{lstlisting}[style=ece361shell, caption={Emulating 10\% packet loss for packets entering h1.}, label={lst:adjust-loss}]
+ubuntu@ece361:~/lab2$ ./lab2-adjustLoss h1 10%
 \end{lstlisting}
+
+To test the effect of the loss rate, we will use a tool called \texttt{iperf}.
+With two terminals, enter h1 in one terminal, and enter h2 in the other.
+In terminal h1, run an \texttt{iperf} server (the terminal will pause, waiting for a client to connect and send it data), as shown in listing~\ref{lst:iperf-server}.
+
+\begin{lstlisting}[style=ece361shell, caption={Running an \texttt{iperf} server in h1.}, label={lst:iperf-server}]
+ubuntu@ece361:~/lab2$ ./lab2-enterHost h1
+ubuntu@ece361-h1:~/lab2$ iperf -s -u
+------------------------------------------------------------
+Server listening on UDP port 5001
+Receiving 1470 byte datagrams
+UDP buffer size:  208 KByte (default)
+------------------------------------------------------------
+
+\end{lstlisting}
+
+In a second terminal, we enter h2 and run \texttt{iperf} client to send traffic to h1 at a rate of 100 Mbps.
+Listing~\ref{lst:iperf-client} show the client in action with the end result highlighted, verifying the packet loss is being properly emulated.
+
+\begin{lstlisting}[style=ece361shell, caption={Running an \texttt{iperf} client in h2.}, label={lst:iperf-client}]
+ubuntu@ece361:~/lab2$ ./lab2-enterHost 2
+ubuntu@ece361-h2:~/lab2$ iperf -c 192.168.1.1 -u -b 100M
+------------------------------------------------------------
+Client connecting to 192.168.1.1, UDP port 5001
+Sending 1470 byte datagrams
+UDP buffer size:  208 KByte (default)
+------------------------------------------------------------
+[  3] local 192.168.1.2 port 46722 connected with 192.168.1.1 port 5001
+[ ID] Interval       Transfer     Bandwidth
+[  3]  0.0-10.0 sec   120 MBytes   101 Mbits/sec
+[  3] Sent 85471 datagrams
+[  3] Server Report:
+[  3]  0.0-10.0 sec   108 MBytes  90.5 Mbits/sec   0.001 ms (@"\btHL 8539/85470 (10\%)"@)
+[  3]  0.0-10.0 sec  6 datagrams received out-of-order
+\end{lstlisting}
+
+After this test, you may kill the \texttt{iperf} server in the h1 terminal by pressing Ctrl+C.
+
 
 %-------------------------------------------------------------------------------------------------
 \section{Library Overview}
