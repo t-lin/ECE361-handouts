@@ -596,5 +596,74 @@ You can then verify the submission by typing \texttt{ece361-submit list \thelab}
 
 At some point after the lab's due date, private test cases will be run against your submission to calculate your final mark.
 
+\appendix
+\section{Appendix}
+\label{sec:appendix}
+\subsection{The Frame Class}
+In lab 1 you worked with a Socket class. In this lab you will be working with a Frame class which encapsulates the concept of a frame. For this lab we have encapsulated all the functionalities in this class so you do not need to work with sockets directly.
 
+\subsection{Importing the Library}
+Similar to lab 1 you will need an ``import'' statement in order to use the library:
+\begin{lstlisting}[caption={Import Statement}, language=python]
+from ece361.lab2.frame import Frame
+\end{lstlisting}
+
+\subsection{Creation}
+To create a Frame class object, at least 2 parameters are required: seqnum (sequence number) and data, which are self explanatory. The other parameters are optional and illustrated below:
+\begin{lstlisting}[caption={Frame Object Instantiation}, language=python]
+# Instantiate a new Frame object
+new_frame = Frame(
+                  # sequence number
+                  seqnum,
+                  # bytes storing the actual data
+                  data,
+                  # optional: (ip_address, port) tuple for destination
+                  destination,
+                  # optional: expected acknowlegement number
+                  expected_ack,
+                  # optional: timeout for receiving acknowlegement
+                  timeout
+                  )
+\end{lstlisting}
+
+\subsection{Methods you Need in Order to Complete the Lab}
+
+\subsubsection{status()}
+This is one of the key methods for completing this lab. It is for checking the current status of the frame object. A frame can be in one of the following 4 states: notsent, inflight, timedout, ack\_nacked. To check the current status of the frame object, you need to write something like the following, assuming a Frame object called ``frame'' exists:
+\begin{lstlisting}[caption={Frame status}, language=python]
+if (frame.status() == Frame.Status.notsent):
+    ...
+\end{lstlisting}
+
+\subsubsection{send()}
+As the name suggests, this method sends the frame to its destination. It only works if the destination field is not empty when the Frame was created. Note that unlike lab 1, there is no need to pass in the destination address since we assume that a Frame's destination is determined upon creation (and cannot be modified). If you want to send to a different destination you have to
+create a new Frame object.
+
+\subsubsection{wait\_for\_ack\_nack()}
+This method will block until an ACK/NACK for the frame comes back.
+
+\subsubsection{wait\_for\_multiple\_ack\_nacks(frames\_list)}
+This is an essential function for completing Section \ref{sec:sliding} of the lab. This is the ``non-blocking'' counterpart of wait\_for\_ack\_nack(), where a list of frames is passed in and will return if any of the frames in the list receives an ACK/NACK. If none of the frames in frames\_list receive an ACK/NACK then this function will block. This is a static function. In order to use it one needs to proceed its name with ``Frame'':
+\begin{lstlisting}[caption={Frame status}, language=python]
+Frame.wait_for_multiple_ack_nacks(frames_list)
+\end{lstlisting}
+Note that although this function returns when at least one the frames gets an ack, it does not tell which frame(s) in the frames\_list is acknowledged. After this function returns one needs to go through the entire frames\_list again and check the status of each to know which ones got acknowledged.
+
+\subsubsection{Other Methods}
+The following methods you do not need for completing your part of the lab, but are used in skeleton/example code so are included here for reference purposes:
+
+\subsubsection{sendtime()}
+returns a datetime object indicating the time the frame object is sent. If there are multiple send attempts returns the time for the most recent send attempt. Returns None if frame was never sent.
+
+\subsubsection{retrieve\_ack\_nack()}
+retrieves the ACK/NACK of the frame (if ACK/NACKED), which is a number. This method only works if the frame is in ack\_nacked state. Since there are no true NACKs in this lab you do not really need this function because ACK is always the next sequence number. Making sure the frame is in ack\_nacked state is sufficient.
+
+\subsubsection{acktime()}
+returns a datetime object indicating the time where the frame is acknowledged. returns None if no acknowledgement has come back.
+
+\subsubsection{pack\_data()}
+returns the raw ``packed'' version of the frame object, which is a sequence of bytes with first 4 bytes being the sequence number followed by frame data. The ``packed'' version is useful for transmitting the frame over the network.
+
+\subsubsection{unpack\_data()}
+This is exactly the opposite of pack\_data() where a sequence of bytes is converted to a Frame object, assuming the same format: 4 bytes sequence number followed by data. Each time this method is called a new Frame object is returned.
 \end{document}
