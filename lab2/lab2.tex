@@ -22,7 +22,7 @@
 \section{Overview}
 \label{sec:overview}
 %-------------------------------------------------------------------------------------------------
-In many applications reliable data transmission over an unreliable service is required. ARQ protocols are for exactly that. In this lab, you will be given 2 virtual hosts and an unreliable channel between them. With that you will first enhance the Stop and Wait protocol implemented in lab 1 to work on an unreliable channel. After that you will implement a better, more efficient sliding window protocol.
+In many applications reliable data transmission over an unreliable service is required. ARQ protocols are for exactly that. In this lab, you will be given 2 virtual hosts and an unreliable channel between them. With that you will first enhance the Stop and Wait protocol implemented in lab 1 to work on an unreliable channel. After that you will implement a better, more efficient sliding window protocol, in particular, the ``send many, receive one'' protocol.
 
 %-------------------------------------------------------------------------------------------------
 \subsection{Lab Initialization}
@@ -212,7 +212,7 @@ After this test, you may kill the \texttt{iperf} server in the h1 terminal by pr
 \section{Library Overview}
 %-------------------------------------------------------------------------------------------------
 In the last lab, you were asked to manually split a large file into smaller segments and send each individual segment by calling some socket API. In this lab, we have abstracted some of the low level details so you can use a set of higher level APIs that are easier to work with.
-\figvs{0.8}{sender_class}{trim=0cm 0cm 0cm 0cm,clip}{Sender Class}
+\figvs{0.8}{sender_class}{trim=0cm 0cm 0cm 0cm,clip}{Sender Class Hierarchy}
 \figvs{0.8}{frame_class}{trim=0cm 0cm 0cm 0cm,clip}{Frame Class}
 
 \subsection{Stop and Wait}
@@ -259,7 +259,7 @@ $ cat received.txt
 I only have a few bytes.
 \end{lstlisting}
 
-\subsubsection {The --debug option}
+\subsubsection {The \texttt{--}debug option}
 We have provided you with a feature that prints out the progress on the sender and receiver frame by frame. This is very useful for later on for either debugging your code or just to understand how the protocol works. Try the following:
 
 From the h1 terminal:
@@ -339,7 +339,7 @@ Let's change the frame-size back to 1 for now:
 }
 \end{lstlisting}
 \end{minipage}
-Rerun the 'text\_file\_small.txt with the '--debug' option. What is the result and why?
+Rerun the 'text\_file\_small.txt with the '\texttt{--}debug' option. What is the result and why?
 \subsubsection {Choosing a timeout}
 In the previous experiment you saw that the prgram hang because if a frame is lost the sender would be waiting for the acknowledgement forever. To fix this, we need an appropriate timeout such that when the timer expires the sender retransmits the previous frame. Base on your rtt calculation in the previous section, change the "timeout" field of the config file from "null" to an appropriate value (Note: the unit is second, and floating point number is accepted)
 
@@ -425,11 +425,10 @@ $ diff binary_file_large received
 
 \noindent If the previous experiment succeeds, congratulations! You have a fully working stop and wait ARQ.
 
-\section{Sliding Window ARQ}
-From the previous section, you can see that although Stop and Wait protocol can achieve reliable transmission over an unreliable service, it can be quite inefficient sometimes, especially when there are many timedout frames. This is because in the stop and wait protocol, frames are sent one at a time and if the sender is blocked waiting for acknowledgement no frame is being sent and the channel bandwidth is not being utilized efficiently. To fix this issue, we can send multiple frames at a time. This is where sliding window ARQ comes in. For the purpose of this lab, we are only going to modify the sender to use a sliding window and keeping the receiver the same. In the real world, however, both the sender and the receiver can use a sliding window to increase efficiency.
+\section{Sliding Window ARQ (Send Many, Receive One)}
 
 \subsection{Change the Config File to Use Sliding Window ARQ}
-Change the "arq\_protocol" field of the config file from "stopandwait" to "slidingwindow". Make sure "window-size" is an integer greater than 1. Make sure "maxseqnum" is at least "window-size". Keep other parameters (e.g. timeout) the same as previous section:
+Change the "arq\_protocol" field of the config file from "stopandwait" to "slidingwindow". Make sure "window-size" is an integer greater than 1. Make sure "maxseqnum" is at least "window-size" (why?). Keep other parameters (e.g. timeout) the same as previous section:
 
 \begin{lstlisting}[caption={Sliding Window Configuration}]
 {
@@ -438,7 +437,7 @@ Change the "arq\_protocol" field of the config file from "stopandwait" to "slidi
     "receiver_port": 6789,
     "arq_protocol": "slidingwindow",
     "timeout": <your choice>,
-    "frame_size": 1024,
+    "frame_size": 1,
     "window_size": 2,
     "maxseqnum": 64
 }
@@ -446,19 +445,78 @@ Change the "arq\_protocol" field of the config file from "stopandwait" to "slidi
 
 \think{If you set the window-size to be 1, what does the Sliding Window ARQ become?}
 
-\subsection {A Simplified Example}
-Demo only for now. To be completed.
+Try running the 'text\_file\_small.txt' experiment with '\texttt{--}debug' the same way as before:
 
-\subsection{The Nack Frame}
-In the Stop and Wait protocol, since at most one frame can be outstanding at any given time, the receiver is guaranteed to receive the frames in order. However, in the sliding window ARQ, the receiver might be receiving out-of-order frames. When this happens, the receiver can either drop the frame, or better, sending back a Nack to indicate that this frame is out-of-order and needs to be retransmitted (remember we are not implementing sliding window on the receiver side so the reciever only has a buffer size of 1 so cannot accept out-of-order frames). The NACK approach is what we are going to use for this lab. The way the NACK works is that, when the receiver sends the response frame, it always contain a sequence number that is the sequence number of the next frame the receiver is expected to receive. When the sender receive the Ack/Nack, it needs to verify this number against the sequence number of the frame it just sent to see if it sent the right frame.
+\noindent From the h1 terminal:
+\begin{lstlisting}[language=bash]
+$ python receiver.py --debug received.txt
+\end{lstlisting}
+From the h2 terminal:
+\begin{lstlisting}[language=bash]
+$ python sender.py --debug text_file_small.txt
+\end{lstlisting}
 
-\noindent Now open the file 'slidingwindowsender.py' and find the '\_\_ack\_nack' function. Implement this function based on what you just learnt.
+As you can see, the programs seem to be hanging without any debug outputs, which means no frame is being sent or received. This shouldn't surprise you since sliding window ARQ has not been implemented yet! Open the file slidingwindowsender.py and find the \_arqsend method. We have started the implementation for you by creating a send queue and your task is to complete the method. Apart from this method, the rest of the sender functions and the receiver are already implemented for you. We have given you some high level guidelines on what to do as well in the comments. Briefly go through the comments to have an idea of what needs to be done, but before you start coding, you must read the next section for a detailed description of our implementation of the sliding window protocol, which might differ in a few minor details from what you have learned.
+
+\subsection{Protocol Description}
+\figvs{0.4}{sw}{trim=0cm 0cm 0cm 0cm,clip}{Stop and Wait ARQ Timing Diagram}
+\figvs{0.4}{sliding}{trim=0cm 0cm 0cm 0cm,clip}{Sliding Window ARQ Timing Diagram}
+\figvs{0.4}{sliding_incorrect}{trim=0cm 0cm 0cm 0cm,clip}{Sliding Window ARQ Incorrect Implementation}
+
+As you can see from Figure \ref{sw}, stop and wait ARQ is inefficient because the channel is idle during the period where the sender waits for acknowledgement from the receiver.
+It would be much more efficient if the channel could be kept busy during this waiting period. This is where sliding window ARQ comes in, as illustrated in Figure \ref{sliding},
+which demonstrates how sliding window works on a perfect, errorless channel.
+
+\noindent A sliding window can be implemented on both the sender and the receiver side, but for this lab, we only consider sliding window on the sender side and the receiver still accepts one packet
+at a time, similar to a stop and wait receiver. This makes our protocol behave like  ``send many, receive one''.
+
+\noindent Note that one needs to make sure that the sliding window is implemented correctly. A typical incorrect implementation is illustrated in Figure \ref{sliding_incorrect}
+where frames 1, 2 and 3 should not be resent.
+
+\figvs{0.4}{sliding_error}{trim=0cm 0cm 0cm 0cm,clip}{Sliding Window ARQ Error Control}
+
+\subsubsection{Error Control}
+The most basic error control mechanisims in sliding window ARQ are acknowledgement and timeout, much like stop and wait. Upon receiving the frame with the correct sequence number,
+the receiver sends back an ACK with the next sequence number. The acknowledgements are independently sent to every frame. Each frame also has a timer which starts right after the 
+frame is sent. If, after some timeout period the frame does not receive its corresponding ACK, the frame is retransmitted. As illustrated in Figure \ref{sliding_error}, frame 0 is retransmitted after
+sometimeout period.
+
+\figvs{0.4}{ack_multi}{trim=0cm 0cm 0cm 0cm,clip}{Culmulative ACK}
+Consider the case in Figure \ref{ack_multi}. Frames 0,1,2,3 all transmitted successfully but the ACKs are all lost. From the senders point of view there is no difference to the case where the frames
+are lost so frame 0 is retransmitted. When the receiver receives frame 0, it should send an acknowledgements for frames 0, 1, 2 and 3 since those frames have all been received. However, a more 
+bandwidth efficient way is to use what is called a "culmulative ack", which the receiver only sends an ACK for frame 3 (ACK 4), which implies that frames 0, 1, 2 3 have all been received, and the sender
+can immediately start sending frame 4, as illustrated in the figure. Note that if the sender does not know about culmulative acks it won't be able to talk to the receiver correctly.
+
+\figvs{0.4}{ack_multi_handle}{trim=0cm 0cm 0cm 0cm,clip}{Culmulative ACK Handling}
+In very much exactly the same way, if an ACK for a certain frame is received it is implied that all frames earlier than that frame are received, even if their ACKs don't arrive, as illustrated in Figure
+\ref{ack_multi_handle}. Upon receiving the ACK, the sender can immediately start transmitting the next frame.
+
+\figvs{0.4}{ack_multi_handle2}{trim=0cm 0cm 0cm 0cm,clip}{Culmulative ACK Handling Alternative}
+There is an implementation detail on what the sender should do upon receiving a culmulative ack in half way through transmitting the send window. The best implementation is of course that in Figure \ref{ack_multi_handle}, where
+the sender aborts the current send window and immediately start sending the frame with the correct sequence number. However, this is sometimes hard to implement. Therefore, in this lab you will do a simpler but less efficient implementation
+as illustrated in Figure \ref{ack_multi_handle2}, where the sender is allowed to finish the current send window and then starts sending the correct frame. This is less efficient due to extra duplicated frames being
+sent, but easier to implement.
+
+\figvs{0.4}{nack}{trim=0cm 0cm 0cm 0cm,clip}{Out of Order Frames and NACKs}
+Finally, there is one last case we need to cover, which is out of order frames. As illustrated in Figure \ref{nack}, frames 0 is lost, so frames 1, 2, 3 are out of order so the receiver rejects the frame
+and sends a NACK for the sequence number of the correct frame, in this case, frame 0. In our implementation, NACKs are always sent for out of order frames.
+
+\noindent Note that the NACK here in this lab might not be what you think it is. It is just called NACK to distinguish it from an ACK. Implementation-wise there is no difference between a NACK and a resend
+of the ``ACK'' for the last received frame. So to some extent NACKs in our context is no different than cumulative ACKs except that it is sending ACKs for frames in the past instead of frames in the future.
+In real life, however, NACKs may be really 'NACKs' indicating that the there is something wrong with the frame (e.g. corruption), but you don't have to worry about that in this lab. You can assume that
+if a  frame arrives at the receiver it always arrives without error.
+
+\think{If we do not send any NACKs, does the sliding window ARQ still work? If the answer is yes, what mechanism will it rely on for the sender to know to re-transmit the correct frame and why are NACKs useful then?}
 
 \subsection{Implement the Sliding Window ARQ}
-Based on what you've done so far, take a look at the '\_arq\_send' function in 'slidingwindowsender.py'. We have started the implementation by creating a send\_queue for keeping track of the sliding window. Follow the guidelines to complete the implementation. Please also implement the "frames\_sent" and "frames\_delivered" statistics. During the debugging stage, it is recommended to test transmitting "text\_file\_small.txt" with "frame-size" 1 and "--debug" on. (However, the DEBUG messages on the sender side needs to be implemented by you).
+Based on what you've learnt far, implement the '\_arq\_send' function in 'slidingwindowsender.py'. During the debugging stage, it is recommended to test transmitting "text\_file\_small.txt" with "frame-size" 1 and "--debug" on. (However, the DEBUG messages on the sender side needs to be implemented by you). After testing your code on the small test case, test sending the binary\_file\_large file using a frame-size of 1024 and 5\% channel loss both direction. After the transmission is done, use the diff command to make sure that the file is transmitted successfully.
+
+\hint{If you get stuck, go back to take a look at client\_improved.py in the example directory and understand it in detail. A lot of the ideas used in that progam are directly applicable to implementing sliding window ARQ.}
 
 
-\noindent After you are confident that you have a working solution, test your implementation by sending the 'binary\_file\_large' file on a channel with 5\% loss both directions and "frame-size" 1024:
+\subsection{Getting the Optimal Transmission Time}
+
+Start with the following configuration:
 \begin{lstlisting}[caption={Sliding Window Configuration}]
 {
     "sender_address": "192.168.1.2",
