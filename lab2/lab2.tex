@@ -246,11 +246,11 @@ Now run the following:
 
 From the h1 terminal:
 \begin{lstlisting}[language=bash]
-$ python receiver.py received.txt
+$ python3 receiver.py received.txt
 \end{lstlisting}
 From the h2 terminal:
 \begin{lstlisting}[language=bash]
-$ python sender.py text_file_small.txt
+$ python3 sender.py text_file_small.txt
 \end{lstlisting}
 Since the receiver is just a server that always listens to incoming packets, it does not know when the transmission ends. Therefore, you need to Ctrl-C the receiver before proceeding. This applies to all sections of the lab.
 The sender should finish (If the sender doesn't exit by itself, Ctrl-C it). Verify that the file gets transmitted successfully:
@@ -264,11 +264,11 @@ We have provided you with a feature that prints out the progress on the sender a
 
 From the h1 terminal:
 \begin{lstlisting}[language=bash]
-$ python receiver.py --debug received.txt
+$ python3 receiver.py --debug received.txt
 \end{lstlisting}
 From the h2 terminal:
 \begin{lstlisting}[language=bash]
-$ python sender.py --debug text_file_small.txt
+$ python3 sender.py --debug text_file_small.txt
 \end{lstlisting}
 
 Try understanding the debug message. It shouldn't be too hard since this is just a simple stop and wait and you implemented the same algorithm in lab 1. However, later on when the algorithm gets more complicated this will become more useful.
@@ -291,11 +291,11 @@ Run the following:
 
 From the h1 terminal:
 \begin{lstlisting}[language=bash]
-$ python receiver.py received
+$ python3 receiver.py received
 \end{lstlisting}
 From the h2 terminal:
 \begin{lstlisting}[language=bash]
-$ python sender.py binary_file_large
+$ python3 sender.py binary_file_large
 \end{lstlisting}
 
 \warn{Do not use the '--debug' option when sending large files! The debug messages will flood your screen.}
@@ -411,11 +411,11 @@ Finally, let's test the fully implemented stop and wait ARQ protocol on binary\_
 \end{lstlisting}
 From the h1 terminal:
 \begin{lstlisting}[language=bash]
-$ python receiver.py received
+$ python3 receiver.py received
 \end{lstlisting}
 From the h2 terminal:
 \begin{lstlisting}[language=bash]
-$ python sender.py binary_file_large
+$ python3 sender.py binary_file_large
 \end{lstlisting}
 
 \noindent You might need to wait for a while for the transmission to finish. Verify that the file gets transmitted successfully using diff.
@@ -449,11 +449,11 @@ Try running the 'text\_file\_small.txt' experiment with '\texttt{--}debug' the s
 
 \noindent From the h1 terminal:
 \begin{lstlisting}[language=bash]
-$ python receiver.py --debug received.txt
+$ python3 receiver.py --debug received.txt
 \end{lstlisting}
 From the h2 terminal:
 \begin{lstlisting}[language=bash]
-$ python sender.py --debug text_file_small.txt
+$ python3 sender.py --debug text_file_small.txt
 \end{lstlisting}
 
 As you can see, the programs seem to be hanging without any debug outputs, which means no frame is being sent or received. This shouldn't surprise you since sliding window ARQ has not been implemented yet! Open the file slidingwindowsender.py and find the \_arqsend method. We have started the implementation for you by creating a send queue and your task is to complete the method. Apart from this method, the rest of the sender functions and the receiver are already implemented for you. We have given you some high level guidelines on what to do as well in the comments. Briefly go through the comments to have an idea of what needs to be done, but before you start coding, you must read the next section for a detailed description of our implementation of the sliding window protocol, which might differ in a few minor details from what you have learned.
@@ -477,13 +477,13 @@ where frames 1, 2 and 3 should not be resent.
 
 \subsubsection{Error Control}
 The most basic error control mechanisims in sliding window ARQ are acknowledgement and timeout, much like stop and wait. Upon receiving the frame with the correct sequence number,
-the receiver sends back an ACK with the next sequence number. The acknowledgements are independently sent to every frame. Each frame also has a timer which starts right after the 
+the receiver sends back an ACK with the next sequence number. The acknowledgements are independently sent to every frame. Each frame also has a timer which starts right after the
 frame is sent. If, after some timeout period the frame does not receive its corresponding ACK, the frame is retransmitted. As illustrated in Figure \ref{sliding_error}, frame 0 is retransmitted after
 sometimeout period.
 
 \figvs{0.4}{ack_multi}{trim=0cm 0cm 0cm 0cm,clip}{Culmulative ACK}
 Consider the case in Figure \ref{ack_multi}. Frames 0,1,2,3 all transmitted successfully but the ACKs are all lost. From the senders point of view there is no difference to the case where the frames
-are lost so frame 0 is retransmitted. When the receiver receives frame 0, it should send an acknowledgements for frames 0, 1, 2 and 3 since those frames have all been received. However, a more 
+are lost so frame 0 is retransmitted. When the receiver receives frame 0, it should send an acknowledgements for frames 0, 1, 2 and 3 since those frames have all been received. However, a more
 bandwidth efficient way is to use what is called a "culmulative ack", which the receiver only sends an ACK for frame 3 (ACK 4), which implies that frames 0, 1, 2 3 have all been received, and the sender
 can immediately start sending frame 4, as illustrated in the figure. Note that if the sender does not know about culmulative acks it won't be able to talk to the receiver correctly.
 
