@@ -6,7 +6,7 @@
 
 % Lab parameters
 \def\thelab{2}
-\def\datedue{Feb. 17, 2020 @ 11:59 PM}
+\def\datedue{Feb. 18, 2020 @ 11:59 PM}
 
 \useCompactTitle{ECE361 Lab \thelab}{Automatic Repeat Request (ARQ) Protocols}
 
@@ -293,7 +293,7 @@ When in doubt, refer to Appendix~\ref{sec:appendix} for more information.
 
 %-------------------------------------------------------------------------------------------------
 \section{Stop-and-Wait ARQ}
-\label{sec:example}
+\label{sec:stop-and-wait}
 %-------------------------------------------------------------------------------------------------
 In this section you will explore the stop-and-wait ARQ, first in an errorless channel, then in a error-prone channel.
 You will see the effects of frame loss in the forward direction (sender to receiver), as as well as the reverse direction (receiver to sender, in the case of ACKs).
@@ -409,7 +409,7 @@ When the transmission ends, the sender will print some statistics (e.g. see list
 ARQ protocol: stopandwait
 Frames sent: 9106
 Frames delivered: 9106
-Transmission time: 0:00:03.292909
+Transmission time: 0:00:23.292909
 Average RTT: 0:00:00
 Maximum RTT: 0:00:00
 \end{lstlisting}
@@ -556,14 +556,18 @@ However, if you are interested, you can read the entire code-base since we made 
 \label{sec:sliding}
 %-------------------------------------------------------------------------------------------------
 In this section, you will complete the implementation of a sender that uses the Send Many, Receive One ARQ protocol.
+Section~\ref{subsec:config-file-slidingwindow} shows how to configure the sender to use the Send Many, Receive One protocol.
+Section~\ref{sec:protocol} provides a technical overview of the protocol, and section~\ref{subsec:implement-slidingwindow} describes your task.
 
 %-------------------------------------------------------------------------------------------------
-\subsection{Change the Configuration File to Use Sliding Window ARQ}
+\subsection{Configuring the Sender to Use Sliding Window ARQ}
+\label{subsec:config-file-slidingwindow}
 %-------------------------------------------------------------------------------------------------
+Update the configuration file.
 Change the \texttt{"arq\_protocol"} field of the configuration file from \texttt{"stopandwait"} to \texttt{"slidingwindow"}.
 Make sure \texttt{"window\_size"} is an integer greater than 1.
 Make sure \texttt{"maxseqnum"} is at least \texttt{"window\_size"}.
-Keep other parameters (e.g. timeout) the same as previous section.
+Keep other parameters (e.g. timeout) the same as in the stop-and-wait section.
 \begin{lstlisting}[style=ece361-shell-base, caption={Sliding Window Configuration}]
 {
     "sender_address": "192.168.1.2",
@@ -577,28 +581,30 @@ Keep other parameters (e.g. timeout) the same as previous section.
 }
 \end{lstlisting}
 
-\think{If you set the window-size to be 1, what does the Sliding Window ARQ become?}
-\think{Why must the \texttt{"maxseqnum"} be at least \texttt{"window\_size"}?}
+\think{If you set the window-size to be 1, what does the Sliding Window ARQ become?\\
+Why must the \texttt{"maxseqnum"} be at least \texttt{"window\_size"}?}
+%\think{Why must the \texttt{"maxseqnum"} be at least \texttt{"window\_size"}?}
 
-Try running the \texttt{text\_file\_small.txt} experiment with \texttt{-{}-debug} the same way as before:
+Try running the \texttt{text\_file\_small.txt} experiment with \texttt{-{}-debug} the same way as before.
+From the h1 terminal, run: \texttt{python3 receiver.py --debug received.txt}.
+%\begin{lstlisting}[style=ece361-shell-base, caption={}]
+%ubuntu@ece361-h1:~/lab2$ python3 receiver.py --debug received.txt
+%\end{lstlisting}
+From the h2 terminal, run: \texttt{python3 sender.py --debug text\_file\_small.txt}.
+%\begin{lstlisting}[style=ece361-shell-base, caption={}]
+%ubuntu@ece361-h2:~/lab2$ python3 sender.py --debug text_file_small.txt
+%\end{lstlisting}
 
-\noindent From the h1 terminal:
-\begin{lstlisting}[style=ece361-shell-base, caption={}]
-ubuntu@ece361-h1:~/lab2$ python3 receiver.py --debug received.txt
-\end{lstlisting}
-
-From the h2 terminal:
-\begin{lstlisting}[style=ece361-shell-base, caption={}]
-ubuntu@ece361-h2:~/lab2$ python3 sender.py --debug text_file_small.txt
-\end{lstlisting}
-
-As you can see, the programs seem to be hanging without any debug outputs, which means no frame is being sent or received.
+As you can see, the programs will hang without any debug outputs, which means no frame is being sent or received.
 This shouldn't surprise you since sliding window ARQ has not been implemented yet!
 Open the \texttt{slidingwindowsender.py} file and find the \texttt{\_arqsend} method.
-We have started the implementation for you by creating a send queue and your task is to complete the method.
-Apart from this method, the rest of the sender functions and the receiver are already implemented for you.
-We have given you some high level guidelines on what to do as well in the comments.
-Briefly go through the comments to have an idea of what needs to be done, but before you start coding, you must read the next section for a detailed description of our implementation of the sliding window protocol, which might differ in a few minor details from what you have learned.
+
+\work{Your task is to complete the \texttt{\_arqsend} method. We have started the implementation for you by creating a send queue.}
+%We have started the implementation for you by creating a send queue and your task is to complete the method.
+Apart from this method, the rest of the sender functions are already implemented for you.
+
+\hint{We have given you some high level guidelines on what to do as well in the comments. Before starting, make sure you have read section~\ref{sec:protocol}, which explains our implementation (it may differ in minor details from what you have learned).}
+%Briefly go through the comments to have an idea of what needs to be done, but before you start coding, you must read the next section for a detailed description of our implementation of the sliding window protocol, which might differ in a few minor details from what you have learned.
 
 %-------------------------------------------------------------------------------------------------
 \subsection{Protocol Description}
@@ -606,68 +612,74 @@ Briefly go through the comments to have an idea of what needs to be done, but be
 %-------------------------------------------------------------------------------------------------
 As you can see from Figure~\ref{sw}, stop-and-wait ARQ is inefficient because the channel is idle during the period where the sender waits for acknowledgement from the receiver.
 It would be much more efficient if the channel could be kept busy during this waiting period.
-This is where sliding window ARQ comes in, as illustrated in Figure~\ref{sliding}, which demonstrates how sliding window works on a perfect, errorless channel.
-\figvs{0.4}{sw}{trim=0cm 0cm 0cm 0cm,clip}{Stop-and-Wait ARQ Timing Diagram}
-\figvs{0.4}{sliding}{trim=0cm 0cm 0cm 0cm,clip}{Sliding Window ARQ Timing Diagram}
+This is where sliding window ARQ comes in. Figure~\ref{sliding} illustrates how sliding window works on a perfect, errorless channel.
+\figvs{0.35}{sw}{trim=0cm 0cm 0cm 0cm,clip}{Stop-and-Wait ARQ Timing Diagram}
+\figvs{0.35}{sliding}{trim=0cm 0cm 0cm 0cm,clip}{Sliding Window ARQ Timing Diagram}
 
-A sliding window can be implemented on both the sender and the receiver side, but for this lab, we only consider sliding window on the sender side and the receiver still accepts one frame
-at a time, similar to a stop-and-wait receiver. This makes our protocol behave like "Send Many, Receive One".
+A sliding window can be implemented on both the sender and the receiver side, but for this lab, we only consider sliding window on the sender side.
+The receiver still accepts one frame at a time, similar to a stop-and-wait receiver.
+Thus, our protocol behave like "Send Many, Receive One".
 
 Note that one needs to make sure that the sliding window is implemented correctly.
 A typical incorrect implementation is illustrated in Figure~\ref{sliding_incorrect} where frames 1, 2 and 3 should not be resent.
-\figvs{0.4}{sliding_incorrect}{trim=0cm 0cm 0cm 0cm,clip}{Sliding Window ARQ Incorrect Implementation}
+\figvs{0.35}{sliding_incorrect}{trim=0cm 0cm 0cm 0cm,clip}{Sliding Window ARQ Incorrect Implementation}
 
 
 %-------------------------------------------------------------------------------------------------
 \subsubsection{Error Control}
 %-------------------------------------------------------------------------------------------------
 The most basic error control mechanisims in sliding window ARQ are acknowledgement and timeout, much like stop-and-wait.
-Upon receiving the frame with the correct sequence number, the receiver sends back an ACK with the next sequence number.
+Upon receiving a frame with the expected sequence number, the receiver sends back an ACK with the next sequence number.
 The acknowledgements are independently sent to every frame.
-Each frame also has a timer which starts right after the frame is sent.
-If, after some timeout period the frame does not receive its corresponding ACK, the frame is retransmitted.
+The sender maintains a timer for each frame, which starts right after the frame is sent.
+If, after some timeout period, the frame does not receive its corresponding ACK, the frame is retransmitted.
 As illustrated in Figure~\ref{sliding_error}, frame 0 is retransmitted after some timeout period.
-\figvs{0.4}{sliding_error}{trim=0cm 0cm 0cm 0cm,clip}{Sliding Window ARQ Error Control}
+\figvs{0.35}{sliding_error}{trim=0cm 0cm 0cm 0cm,clip}{Sliding Window ARQ Error Control}
 
-Consider the case in Figure~\ref{ack_multi}. Frames 0,1,2,3 all transmitted successfully but the ACKs are all lost.
-From the senders point of view there is no difference to the case where the frames are lost so frame 0 is retransmitted.
-When the receiver receives frame 0, it should send an acknowledgements for frames 0, 1, 2 and 3 since those frames have all been received.
-However, a more bandwidth efficient way is to use what is called a "culmulative ACK", which the receiver only sends an ACK for frame 3 (ACK 4), which implies that frames 0, 1, 2 3 have all been received, and the sender can immediately start sending frame 4, as illustrated in the figure.
-Note that if the sender does not know about culmulative ACKs it won't be able to talk to the receiver correctly.
-\figvs{0.45}{ack_multi}{trim=0cm 0cm 0cm 0cm,clip}{Culmulative ACK}
+Consider the case in Figure~\ref{ack_multi}. Frames 0, 1, 2, and 3 all transmitted successfully but the ACKs are all lost.
+From the sender's point of view there is no difference to the case where the frames are lost, so it retransmits frame 0.
+When the receiver receives the duplicate frame 0, it should send acknowledgements for frames 0, 1, 2 and 3 since those frames have all been received.
+However, a more bandwidth efficient way is to use what is called a "culmulative ACK", in which the receiver only sends an ACK for frame 3 (ACK 4), implying that frames 0 through 3 have all been received.
+When the sender receives this ACK, it immediately sends frame 4, as illustrated in the figure.
+Note that if the sender does not know about culmulative ACKs it won't be able to correctly communicate with the receiver.
+\figvs{0.4}{ack_multi}{trim=0cm 0cm 0cm 0cm,clip}{Culmulative ACK}
 
-In very much exactly the same way, if an ACK for a certain frame is received it is implied that all frames earlier than that frame are received, even if their ACKs don't arrive, as illustrated in Figure~\ref{ack_multi_handle}.
+In the same way, when an ACK for a certain frame is received, it is implied that all frames earlier than that frame were also correctly received, even if their ACKs never arrived. This case is illustrated in Figure~\ref{ack_multi_handle}.
 Upon receiving the ACK, the sender can immediately start transmitting the next frame.
-\figvs{0.45}{ack_multi_handle}{trim=0cm 0cm 0cm 0cm,clip}{Culmulative ACK Handling}
+\figvs{0.4}{ack_multi_handle}{trim=0cm 0cm 0cm 0cm,clip}{Culmulative ACK Handling}
 
-There is an implementation detail on what the sender should do upon receiving a culmulative ACK in half way through transmitting the send window.
-The best implementation is of course that in Figure~\ref{ack_multi_handle}, where the sender aborts the current send window and immediately start sending the frame with the correct sequence number.
-However, this is sometimes hard to implement. Therefore, in this lab you will do a simpler but less efficient implementation as illustrated in Figure~\ref{ack_multi_handle2}, where the sender is allowed to finish the current send window and then starts sending the correct frame.
+There is an implementation detail on what the sender should do upon receiving a culmulative ACK half way through transmitting the send window.
+The best implementation is shown in Figure~\ref{ack_multi_handle}, where the sender aborts the current send window and immediately start sending the frame with the correct sequence number.
+However, this is sometimes challenging to implement.
+Therefore, in this lab, you will do a simpler but less efficient implementation as illustrated in Figure~\ref{ack_multi_handle2}, where the sender is allowed to finish the current send window and then start sending the correct frame.
 This is less efficient due to extra duplicated frames being sent, but easier to implement.
-\figvs{0.45}{ack_multi_handle2}{trim=0cm 0cm 0cm 0cm,clip}{Culmulative ACK Handling (Simpler Implementation)}
+\figvs{0.4}{ack_multi_handle2}{trim=0cm 0cm 0cm 0cm,clip}{Culmulative ACK Handling (Simpler Implementation)}
 
-Finally, there is one last case we need to cover, which is out of order frames.
-As illustrated in Figure~\ref{nack}, frames 0 is lost, so frames 1, 2, 3 are out of order so the receiver rejects the frame and sends a NACK for the sequence number of the correct frame, in this case, frame 0.
+Finally, there is one last case we need to cover, which is frames that arrive out of order.
+As illustrated in Figure~\ref{nack}, if frames 0 is lost, frames 1, 2, 3 will be considered to be out of order by the receiver.
+Thus, it rejects the frame and sends a NACK with the sequence number of the frame it expects (in this case, frame 0).
 In our implementation, NACKs are always sent for out of order frames.
-\figvs{0.4}{nack}{trim=0cm 0cm 0cm 0cm,clip}{Out of Order Frames and NACKs}
+\figvs{0.35}{nack}{trim=0cm 0cm 0cm 0cm,clip}{Out of Order Frames and NACKs}
 
-Note that the NACK here in this lab might not be what you think it is. It is just called NACK to distinguish it from an ACK.
-Implementation-wise there is no difference between a NACK and a resend of the "ACK" for the last received frame.
-So to some extent NACKs in our context is no different than cumulative ACKs except that it is sending ACKs for frames in the past instead of frames in the future.
-In real life, however, NACKs may be really `NACKs' indicating that the there is something wrong with the frame (e.g. corruption), but you don't have to worry about that in this lab. You can assume that if a frame arrives at the receiver it always arrives without error.
+%Note that the NACK here in this lab might not be what you think it is. It is just called NACK to distinguish it from an ACK.
+Note that in this lab, implementation-wise, there is no difference between a NACK and a resend of the ACK for the last received frame.
+%So to some extent NACKs in our context is no different than cumulative ACKs except that it is sending ACKs for frames in the past instead of frames in the future.
+You may have learned that the term "NACK" is also used in the context of indicating frame corruption, but you don't have to worry about that in this lab.
+You can assume that if a frame arrives at the receiver, it always arrives without error.
 
-\think{If we do not send any NACKs, does the sliding window ARQ still work? If the answer is yes, what mechanism will it rely on for the sender to know to re-transmit the correct frame and why are NACKs useful then?}
+\think{If we do not send any NACKs, does the sliding window ARQ still work? If the answer is yes, what mechanism will it rely on for the sender to know to re-transmit the correct frame, and why are NACKs useful then?}
 
 %-------------------------------------------------------------------------------------------------
 \subsection{Implement the Sliding Window ARQ}
+\label{subsec:implement-slidingwindow}
 %-------------------------------------------------------------------------------------------------
-Based on what you've learnt so far, implement the \texttt{\_arqsend} function in \texttt{slidingwindowsender.py}.
-During the debugging stage, it is recommended to test transmitting \texttt{text\_file\_small.txt} with frame size of 1 and \texttt{-{}-debug} on.
-(However, the DEBUG messages on the sender side needs to be implemented by you).
-After testing your code on the small test case, test sending the \texttt{binary\_file\_large} file using a frame size of 1024 and 5\% channel loss in both directions.
+Based on what you've learned so far, implement the \texttt{\_arqsend} function in \texttt{slidingwindowsender.py}.
+During the debugging stage, it is recommended to test transmission using \texttt{text\_file\_small.txt}, with frame size of 1, and \texttt{-{}-debug} on.
+However, the \texttt{DEBUG} messages on the sender side needs to be implemented by you.
+After testing your code on the small text file, test sending the \texttt{binary\_file\_large} file using a frame size of 1024 and 5\% channel loss in both directions.
 After the transmission is done, use the \texttt{diff} command to make sure that the file is transmitted successfully.
 
-\hint{If you get stuck, go back to take a look at \texttt{client\_improved.py} in the example directory and understand it in detail. A lot of the ideas used in that progam are directly applicable to implementing sliding window ARQ.}
+\hint{If you get stuck, take a look at \texttt{client\_improved.py} in the example directory and understand it in detail. A lot of the ideas used in that progam are directly applicable to implementing sliding window ARQ.}
 %\hint{You can check whether your code follows the protocol correctly by inserting \texttt{print} statements in your code and transmit \texttt{text\_file\_small.txt} with a frame size of 1 while running the receiver with the \texttt{-{}-debug} option.}
 
 %-------------------------------------------------------------------------------------------------
@@ -692,29 +704,26 @@ Do you see an improved performance compared to Stop-and-Wait?
 \think{If you keep increasing the window size, what do you see? Can you explain why?}
 \work{Your task is to find an optimal window size. What is your minimum file transmission time?}
 
-Feel free to experiment with any files you like (e.g. images, videos etc.). When you open the images, do you see corruption?
-
-%-------------------------------------------------------------------------------------------------
-\section{Testing}
-%-------------------------------------------------------------------------------------------------
+You can try to experiment with other binary files types (e.g. images, videos etc.). When the implementation is incorrect, do you see corruption?
 
 %-------------------------------------------------------------------------------------------------
 \subsection{Goal}
 %-------------------------------------------------------------------------------------------------
 Your target is to transmit the \texttt{binary\_file\_large} file under 10 seconds, on a channel with 5\% loss both ways, and a frame size of 1024.
 Your sliding window ARQ implementation has to conform to descriptions in Section~\ref{sec:protocol}.
-We will also test with an optimal window size.
-We will not only test the time it takes to transmit the file but also test every aspect of the protocol described in Section~\ref{sec:protocol}, so make sure you test your code thoroughly.
+%We will also test with an optimal window size.
+We will not only test the time it takes to transmit the file but also test every aspect of the protocol described in Section~\ref{sec:protocol}.
+%, so make sure you test your code thoroughly.
 Our additional tests for protocol conformation may change parameters such as channel loss, frame size, and window size, so you should test with different parameters, not just the ones given to you in the lab.
 
-\subsection{Exerciser}
+\section{Exerciser}
 \label{sec:exercise}
 %-------------------------------------------------------------------------------------------------
 You can use the exerciser to help test the correctness of your implementation. The exerciser will run a set of public test cases against your code. However, note that the tests in the exerciser is not complete and it is your responsibility to test your code to make sure it conforms to Section~\ref{sec:protocol}.
 Ensure you have the following files all within the same directory:
 \begin{itemize}
-    \item \textbf{stopwaitsender.py}: Your completed stop-and-wait sender code from section~\textbf{TODO}.
-    \item \textbf{slidingwindowsender.py}: Your completed sliding window sender code from section~\textbf{TODO}.
+    \item \textbf{stopwaitsender.py}: Your completed stop-and-wait sender code from section~\ref{sec:stop-and-wait}.
+    \item \textbf{slidingwindowsender.py}: Your completed sliding window sender code from section~\ref{sec:sliding}.
 \end{itemize}
 
 In terminal, browse to the directory containing the files and type \texttt{ece361-exercise \thelab}.
@@ -743,12 +752,12 @@ At some point after the lab's due date, private test cases will be run against y
 %-------------------------------------------------------------------------------------------------
 \subsection{The Frame Class}
 %-------------------------------------------------------------------------------------------------
-In lab 1 you worked with a Socket class. In this lab you will be working with a Frame class which encapsulates the concept of a frame. For this lab we have encapsulated all the functionalities in this class so you do not need to work with sockets directly.
+In lab 1 you worked with a \texttt{Socket} class. In this lab you will be working with a \texttt{Frame} class which encapsulates the concept of a frame. For this lab we have encapsulated all the functionalities in this class so you do not need to work with sockets directly.
 
 %-------------------------------------------------------------------------------------------------
 \subsection{Importing the Library}
 %-------------------------------------------------------------------------------------------------
-Similar to lab 1 you will need an ``import'' statement in order to use the library:
+Similar to lab 1 you will need an "import" statement in order to use the library:
 \begin{lstlisting}[caption={Import Statement}, language=python]
 from ece361.lab2.frame import Frame
 \end{lstlisting}
@@ -756,7 +765,7 @@ from ece361.lab2.frame import Frame
 %-------------------------------------------------------------------------------------------------
 \subsection{Creation}
 %-------------------------------------------------------------------------------------------------
-To create a Frame class object, at least 2 parameters are required: seqnum (sequence number) and data, which are self explanatory. The other parameters are optional and illustrated below:
+To create a \texttt{Frame} class object, at least 2 parameters are required: \texttt{seqnum} (sequence number) and \texttt{data}, which are self explanatory. The other parameters are optional and illustrated below:
 \begin{lstlisting}[caption={Frame Object Instantiation}, language=python]
 # Instantiate a new Frame object
 new_frame = Frame(
@@ -780,17 +789,17 @@ new_frame = Frame(
 %-------------------------------------------------------------------------------------------------
 \subsubsection{status()}
 %-------------------------------------------------------------------------------------------------
-This is one of the key methods for completing this lab. It is for checking the current status of the frame object. A frame can be in one of the following 4 states: notsent, inflight, timedout, ack\_nacked. To check the current status of the frame object, you need to write something like the following, assuming a Frame object called ``frame'' exists:
+This is one of the key methods for completing this lab. It is for checking the current status of the \texttt{Frame} object. A frame can be in one of the following 4 states: \texttt{notsent}, \texttt{inflight}, \texttt{timedout}, \texttt{ack\_nacked}. To check the current status of the frame, you need to write something similar to the following:
 \begin{lstlisting}[caption={Frame status}, language=python]
+# Assuming 'frame' is an object instance of the Frame class
 if (frame.status() == Frame.Status.notsent):
-    ...
+    # Code here...
 \end{lstlisting}
 
 %-------------------------------------------------------------------------------------------------
 \subsubsection{send()}
 %-------------------------------------------------------------------------------------------------
-As the name suggests, this method sends the frame to its destination. It only works if the destination field is not empty when the Frame was created. Note that unlike lab 1, there is no need to pass in the destination address since we assume that a Frame's destination is determined upon creation (and cannot be modified). If you want to send to a different destination you have to
-create a new Frame object.
+As the name suggests, this method sends the frame to its destination. It only works if the destination field is not empty when the \texttt{Frame} was created. Note that unlike lab 1, there is no need to pass in the destination address since we assume that a \texttt{Frame}'s destination is determined upon creation (and cannot be modified). If you want to send to a different destination you have to create a new \texttt{Frame} object.
 
 %-------------------------------------------------------------------------------------------------
 \subsubsection{wait\_for\_ack\_nack()}
@@ -800,40 +809,51 @@ This method will block until an ACK/NACK for the frame comes back.
 %-------------------------------------------------------------------------------------------------
 \subsubsection{wait\_for\_multiple\_ack\_nacks(frames\_list)}
 %-------------------------------------------------------------------------------------------------
-This is an essential function for completing Section \ref{sec:sliding} of the lab. This is the ``non-blocking'' counterpart of wait\_for\_ack\_nack(), where a list of frames is passed in and will return if any of the frames in the list receives an ACK/NACK. If none of the frames in frames\_list receive an ACK/NACK then this function will block. This is a static function. In order to use it one needs to proceed its name with ``Frame'':
+This is an essential function for completing Section \ref{sec:sliding} of the lab.
+This is the "non-blocking" counterpart of \texttt{wait\_for\_ack\_nack()}, where a list of frames is passed in and will return if any of the frames in the list receives an ACK/NACK.
+If none of the frames in \texttt{frames\_list} receive an ACK/NACK, then this function will block.
+This is a static function. In order to use it one needs to proceed its name with \texttt{"Frame"}:
 \begin{lstlisting}[caption={Frame status}, language=python]
 Frame.wait_for_multiple_ack_nacks(frames_list)
 \end{lstlisting}
-Note that although this function returns when at least one the frames gets an ack, it does not tell which frame(s) in the frames\_list is acknowledged. After this function returns one needs to go through the entire frames\_list again and check the status of each to know which ones got acknowledged.
+Note that although this function returns when at least one the frames gets an ACK, it does not tell which frame(s) in the \texttt{frames\_list} is acknowledged.
+After this function returns one needs to go through the entire \texttt{frames\_list} again and check the status of each to know which ones got acknowledged.
 
 %-------------------------------------------------------------------------------------------------
-\subsubsection{Other Methods}
+\subsection{Other Methods}
 %-------------------------------------------------------------------------------------------------
-The following methods you do not need for completing your part of the lab, but are used in skeleton/example code so are included here for reference purposes:
+You do not need the following methods for completing this lab. They are used in skeleton and example code, so we include them here for reference purposes.
 
 %-------------------------------------------------------------------------------------------------
 \subsubsection{sendtime()}
 %-------------------------------------------------------------------------------------------------
-returns a datetime object indicating the time the frame object is sent. If there are multiple send attempts returns the time for the most recent send attempt. Returns None if frame was never sent.
+Returns a \texttt{datetime} object indicating the time the frame object is sent.
+If there are multiple send attempts, it returns the time for the most recent send attempt.
+Returns \texttt{None} if the frame was never sent.
 
 %-------------------------------------------------------------------------------------------------
 \subsubsection{retrieve\_ack\_nack()}
 %-------------------------------------------------------------------------------------------------
-retrieves the ACK/NACK of the frame (if ACK/NACKED), which is a number. This method only works if the frame is in ack\_nacked state. Since there are no true NACKs in this lab you do not really need this function because ACK is always the next sequence number. Making sure the frame is in ack\_nacked state is sufficient.
+Retrieves the ACK/NACK of the frame (if ACK/NACKED), which is a number. This method only works if the frame is in \texttt{ack\_nacked} state.
+Since there are no true NACKs in this lab you do not really need this function because ACK is always the next sequence number.
+Making sure the frame is in \texttt{ack\_nacked} state is sufficient.
 
 %-------------------------------------------------------------------------------------------------
 \subsubsection{acktime()}
 %-------------------------------------------------------------------------------------------------
-returns a datetime object indicating the time where the frame is acknowledged. returns None if no acknowledgement has come back.
+Returns a \texttt{datetime} object indicating the time when the ACK was received.
+Returns \texttt{None} if no acknowledgement has been received.
 
 %-------------------------------------------------------------------------------------------------
 \subsubsection{pack\_data()}
 %-------------------------------------------------------------------------------------------------
-returns the raw ``packed'' version of the frame object, which is a sequence of bytes with first 4 bytes being the sequence number followed by frame data. The ``packed'' version is useful for transmitting the frame over the network.
+Returns the raw "packed" version of the \texttt{Frame} object, which is a sequence of bytes with first 4 bytes being the sequence number, followed by the frame data.
+The "packed" version is useful for transmitting the frame over the network.
 
 %-------------------------------------------------------------------------------------------------
 \subsubsection{unpack\_data()}
 %-------------------------------------------------------------------------------------------------
-This is exactly the opposite of pack\_data() where a sequence of bytes is converted to a Frame object, assuming the same format: 4 bytes sequence number followed by data. Each time this method is called a new Frame object is returned.
+This is exactly the opposite of \texttt{pack\_data()} where a sequence of bytes is converted to a \texttt{Frame} object, assuming the same format: 4 bytes sequence number followed by data.
+Each time this method is called a new \texttt{Frame} object is returned.
 
 \end{document}
