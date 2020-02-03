@@ -158,15 +158,15 @@ rtt min/avg/max/mdev = 0.046/0.059/0.076/0.013 ms
 \hint{If you wish to exit the virtual host at any point, simply type \texttt{exit} on the command-line.}
 
 %-------------------------------------------------------------------------------------------------
-\subsection{Emulating Packet Loss}
+\subsection{Emulating Frame Loss}
 %-------------------------------------------------------------------------------------------------
 To see the effects of ARQ, we need an unreliable channel between the two virtual hosts.
-To emulate packet loss, we have provided a script called \texttt{lab2-adjustLoss} which allows you to control the loss rate of packets entering a particular host.
-For example, listing~\ref{lst:adjust-loss} shows how to set a packet loss rate of 10\% for packets entering h1.
+To emulate frame loss, we have provided a script called \texttt{lab2-adjustLoss} which allows you to control the loss rate of frames entering a particular host.
+For example, listing~\ref{lst:adjust-loss} shows how to set a frame loss rate of 10\% for frames entering h1.
 
 \warn{The \texttt{lab2-adjustLoss} script will \textbf{not} work if the terminal is within a virtual host, so double-check your prompt.}
 
-\begin{lstlisting}[style=ece361shell, caption={Emulating 10\% packet loss for packets entering h1.}, label={lst:adjust-loss}]
+\begin{lstlisting}[style=ece361shell, caption={Emulating 10\% frame loss for frames entering h1.}, label={lst:adjust-loss}]
 ubuntu@ece361:~/lab2$ ./lab2-adjustLoss h1 10%
 \end{lstlisting}
 
@@ -186,7 +186,7 @@ UDP buffer size:  208 KByte (default)
 \end{lstlisting}
 
 In a second terminal, we enter h2 and run \texttt{iperf} client to send traffic to h1 at a rate of 100 Mbps.
-Listing~\ref{lst:iperf-client} show the client in action with the end result highlighted, verifying the packet loss is being properly emulated.
+Listing~\ref{lst:iperf-client} show the client in action with the end result highlighted, verifying the frame loss is being properly emulated.
 
 \begin{lstlisting}[style=ece361shell, caption={Running an \texttt{iperf} client in h2.}, label={lst:iperf-client}]
 ubuntu@ece361:~/lab2$ ./lab2-enterHost 2
@@ -222,15 +222,13 @@ After this test, you may kill the \texttt{iperf} server in the h1 terminal by pr
 %\end{lstlisting}
 
 %-------------------------------------------------------------------------------------------------
-\section{A Simple Example}
+\section{A Simple Client-Server Example}
 \label{sec:example}
 %-------------------------------------------------------------------------------------------------
 \work{Before starting this section, it is highly recommended that you go through Appendix~\ref{sec:appendix} to get familiar with the lab 2 library we provided to you.}
 
 We have provided you with a simplified example to illustrate some of the concepts of this lab.
-In all 3 terminals, browse into the \texttt{example} directory.
-
-We need some frames to be dropped for this example to be meaningful. Add a drop rate of 20\% to both hosts.
+In all 3 terminals, browse into the \texttt{example} directory. We need some frames to be dropped for this example to be meaningful. Add a drop rate of 20\% to both hosts.
 \begin{lstlisting}[style=ece361shell, caption={}]
 ubuntu@ece361:~/lab2/example$ ./lab2-adjustLoss h1 20%
 ubuntu@ece361:~/lab2/example$ ./lab2-adjustLoss h2 20%
@@ -287,22 +285,27 @@ More importantly, the total transmission time is at most 1 timeout period regard
 %This is an improvement over \texttt{client\_simple.py}.
 To achieve this performance, \texttt{client\_improved.py} no longer uses stop-and-wait.
 Instead, it simultaneously transmits all the frames and then waits for the acknowledgements.
-The same idea can be applied to improving the stop-and-wait ARQ: transmit more packets in parallel (and wait for multiple acknowledgements) to keep the channel busy.
+The same idea can be applied to improving the stop-and-wait ARQ: transmit more frames in parallel (and wait for multiple acknowledgements) to keep the channel busy.
 
 You should have a high-level understanding of these client implementations before proceeding to the next section.
 Open the files \texttt{client\_simple.py} and \texttt{client\_improved.py} and try to understand the code.
 When in doubt, refer to Appendix~\ref{sec:appendix} for more information.
 
 %-------------------------------------------------------------------------------------------------
-\section{Stop and Wait ARQ}
+\section{Stop-and-Wait ARQ}
 \label{sec:example}
 %-------------------------------------------------------------------------------------------------
-In this section... \textbf{TODOOOOOO}
+In this section you will explore the stop-and-wait ARQ, first in an errorless channel, then in a error-prone channel.
+You will see the effects of frame loss in the forward direction (sender to receiver), as as well as the reverse direction (receiver to sender, in the case of ACKs).
+Then you will see how to handle these errors.
 
-\subsection{Simple Stop and Wait}
-We have implemented a stop-and-wait protocol similar to that used in lab 1.
+%-------------------------------------------------------------------------------------------------
+\subsection{Stop-and-Wait (Errorless Channel)}
+%-------------------------------------------------------------------------------------------------
+We begin by introducing stop-and-wait when there iss no risk of frame loss (similar to lab 1).
 Open the configuration file, \texttt{config.json}, and make sure it matches the following (which should be the default):
 \begin{lstlisting}[style=ece361-shell-base, caption={Configuration For Small File}]
+ubuntu@ece361:~/lab2$ cat config.json
 {
     "sender_address": "192.168.1.2",
     "receiver_address": "192.168.1.1",
@@ -315,85 +318,94 @@ Open the configuration file, \texttt{config.json}, and make sure it matches the 
 }
 \end{lstlisting}
 
-In this part we assume an errorless channel. Run the following outside of the virtual hosts:
-\begin{lstlisting}[style=ece361shell, caption={Setting packet loss to 0\% in both directions.}]
-ubuntu@ece361:~/lab2$ ./lab2-adjustLoss h1 0%
-ubuntu@ece361:~/lab2$ ./lab2-adjustLoss h2 0%
-\end{lstlisting}
+First, let's ensure we have an errorless channel. Using the \texttt{lab2-adjustLoss} script, set the frame loss rate in both directions to 0\%.
+%\begin{lstlisting}[style=ece361shell, caption={Setting frame loss to 0\% in both directions.}]
+%ubuntu@ece361:~/lab2$ ./lab2-adjustLoss h1 0%
+%ubuntu@ece361:~/lab2$ ./lab2-adjustLoss h2 0%
+%\end{lstlisting}
 
-
-Now run the following:
-
-From the h1 terminal:
+From the h1 terminal, run:
 \begin{lstlisting}[style=ece361-shell-base, caption={}]
 ubuntu@ece361-h1:~/lab2$ python3 receiver.py received.txt
 \end{lstlisting}
 
-From the h2 terminal:
+From the h2 terminal, run:
 \begin{lstlisting}[style=ece361-shell-base, caption={}]
 ubuntu@ece361-h2:~/lab2$ python3 sender.py text_file_small.txt
 \end{lstlisting}
 
-Since the receiver is just a server that always listens to incoming packets, it does not know when the transmission ends. Therefore, you need to \texttt{Ctrl-C} the receiver before proceeding. This applies to all sections of the lab.
-The sender should finish. Verify that the file gets transmitted successfully:
+When the sender is finished, verify that the file got successfully:
 \begin{lstlisting}[style=ece361-shell-base, caption={}]
 ubuntu@ece361-h2:~/lab2$ cat received.txt
 I only have a few bytes.
 \end{lstlisting}
 
-\warn{Unlike section \ref{sec:example}, you cannot keep the receiver running between experiments. If you want to start a new transmission, you have to \texttt{Ctrl-C} the receiver. This is because this receiver writes to a file and the file needs to be closed before starting the next transmission, otherwise it will simply append to the file and won't yield the desired result.}
+%Since the receiver is just a server that always listens to incoming frames, it does not know when the transmission ends.
+%Therefore, you need to manually \texttt{Ctrl-C} the receiver when the sender finishes. This applies to the rest of the sections in the lab.
+\warn{Unlike the simple ACK server in section~\ref{sec:example}, you cannot keep the receiver running between experiments. If you want to start a new transmission, you have to stop the receiver using \texttt{Ctrl-C}. This ensures the destination file is closed before starting the next transmission, otherwise it will simply append to the file and won't yield the desired result.}
 
-\subsection {The \texttt{-{}-debug} option}
-We have provided you with a feature that prints out the progress on the sender and receiver frame by frame. This is very useful for later on for either debugging your code or just to understand how the protocol works. Try the following:
+%-------------------------------------------------------------------------------------------------
+\subsection {The \texttt{-{}-debug} Option}
+%-------------------------------------------------------------------------------------------------
+We have provided you with a debugging feature that prints out the progress on the sender and receiver frame by frame.
+This is very useful for either debugging or just to understand how the protocol works.
 
-From the h1 terminal:
-\begin{lstlisting}[style=ece361-shell-base, caption={}]
-ubuntu@ece361-h1:~/lab2$ python3 receiver.py --debug received.txt
-\end{lstlisting}
+Try the previous stop-and-wait example with the \texttt{-{}-debug} flag set and try to understand the debug messages.
+From the h1 terminal, run \texttt{python3 receiver.py -{}-debug received.txt}.
+Then from the h2 terminal, run \texttt{python3 sender.py -{}-debug text\_file\_small.txt}
+%\begin{lstlisting}[style=ece361-shell-base, caption={}]
+%ubuntu@ece361-h1:~/lab2$ python3 receiver.py --debug received.txt
+%\end{lstlisting}
+%
+%From the h2 terminal:
+%\begin{lstlisting}[style=ece361-shell-base, caption={}]
+%ubuntu@ece361-h2:~/lab2$ python3 sender.py --debug text_file_small.txt
+%\end{lstlisting}
 
-From the h2 terminal:
-\begin{lstlisting}[style=ece361-shell-base, caption={}]
-ubuntu@ece361-h2:~/lab2$ python3 sender.py --debug text_file_small.txt
-\end{lstlisting}
+%Try understanding the debug message. It shouldn't be too hard since this is just a simple stop-and-wait and you implemented the same algorithm in lab 1. However, later on when the algorithm gets more complicated this will become more useful.
 
-Try understanding the debug message. It shouldn't be too hard since this is just a simple stop-and-wait and you implemented the same algorithm in lab 1. However, later on when the algorithm gets more complicated this will become more useful.
-
+%-------------------------------------------------------------------------------------------------
 \subsection{Round Trip Time (RTT)}
-Now let's try a larger file. For larger files we need to increase the frame size so the transmission doesn't take forever. Let's change the frame size to 1024 (or 1K bytes):
-\begin{lstlisting}[style=ece361-shell-base, caption={Configuration For Large File}]
-{
-    "sender_address": "192.168.1.2",
-    "receiver_address": "192.168.1.1",
-    "receiver_port": 6789,
-    "arq_protocol": "stopandwait",
-    "timeout": null,
-    "frame_size": 1024,
-    "window_size": 2,
-    "maxseqnum": 0
-}
-\end{lstlisting}
-Run the following:
+%-------------------------------------------------------------------------------------------------
+Round trip time, or RTT, is the time it takes for the sender to send a frame and receive an ACK back for that particular frame.
+You will need to update the sender code to calculate the RTT.
 
-From the h1 terminal:
+Let's start by trying to send a larger file. We need to increase the frame size so the transmission doesn't take forever.
+Modify the \texttt{confg.json} file and set the frame size to 1024 (or 1K bytes).
+%Let's change the frame size to 1024 (or 1K bytes):
+%\begin{lstlisting}[style=ece361-shell-base, caption={Configuration For Large File}]
+%{
+%    "sender_address": "192.168.1.2",
+%    "receiver_address": "192.168.1.1",
+%    "receiver_port": 6789,
+%    "arq_protocol": "stopandwait",
+%    "timeout": null,
+%    "frame_size": 1024,
+%    "window_size": 2,
+%    "maxseqnum": 0
+%}
+%\end{lstlisting}
+
+\warn{Do not use the \texttt{-{}-debug} option when sending large files! The debug messages will flood your screen.}
+
+From the h1 terminal, run:
 \begin{lstlisting}[style=ece361-shell-base, caption={}]
 ubuntu@ece361-h1:~/lab2$ python3 receiver.py received
 \end{lstlisting}
 
-From the h2 terminal:
+From the h2 terminal, run:
 \begin{lstlisting}[style=ece361-shell-base, caption={}]
 ubuntu@ece361-h2:~/lab2$ python3 sender.py binary_file_large
 \end{lstlisting}
 
-\warn{Do not use the \texttt{-{}-debug} option when sending large files! The debug messages will flood your screen.}
-
-Verify that the file gets transmitted successfully using \texttt{diff}:
+Verify that the file was successfully transmitted using \texttt{diff}.
+Note that no output from the \texttt{diff} utility indicates that both files are byte-by-byte identical.
 \begin{lstlisting}[style=ece361-shell-base, caption={}]
 ubuntu@ece361-h1:~/lab2$ diff binary_file_large received
 \end{lstlisting}
 
-Note that when the transmission ends the sender prints out some statistics:
-
-\begin{lstlisting}[style=ece361-shell-base, caption={}]
+When the transmission ends, the sender will print some statistics (e.g. see listing~\ref{lst:sender-stats}.
+\begin{lstlisting}[style=ece361-shell-base, caption={Example of sender statistics}, label={lst:sender-stats}]
 ARQ protocol: stopandwait
 Frames sent: 9106
 Frames delivered: 9106
@@ -404,126 +416,138 @@ Maximum RTT: 0:00:00
 
 We have implemented the \texttt{Frames sent}, \texttt{Frames delivered} and \texttt{Transmission time} statistics for you.
 We have left the RTT statistics for you to implement.
-Complete the class function \texttt{\_update\_rtt} in \texttt{stopwaitsender.py}, assuming a new frame just gets delivered with \texttt{t\_send} and \texttt{t\_ack}.
-You need to first calculated a new RTT sample based on \texttt{t\_send} and \texttt{t\_ack} and then update the \texttt{rtt\_max} and \texttt{rtt\_total} member variables.
-The rest of the calculations (e.g. average) has already been implemented for you.
-After you are done, rerun the previous \texttt{binary\_file\_large} experiment and make sure you get the RTT statistics printed out.
 
+\work{Complete the \texttt{\_update\_rtt} class method in \texttt{stopwaitsender.py} so that it updates the \texttt{rtt\_max} and \texttt{rtt\_total} member variables.}
+%You need to first calculated a new RTT sample based on \texttt{t\_send} and \texttt{t\_ack} and then update the \texttt{rtt\_max} and \texttt{rtt\_total} member variables.
+%The rest of the calculations (e.g. average) has already been implemented for you.
+After you are done, re-run the previous \texttt{binary\_file\_large} experiment and make sure you get the RTT statistics printed out.
+
+
+%-------------------------------------------------------------------------------------------------
 \subsection{Handling Frame Drop}
-After you get the basic stop and wait working, enable frame drop from h2 to h1. Keep the channel from h1 to h2 errorless for now. For example, set the frame drop rate to 5\%:
+%-------------------------------------------------------------------------------------------------
+We will now see the effects of frame drops. After you get the basic stop-and-wait working, enable frame drops for packets going into h1.
+Keep the reverse direction (frames from h1 going to h2) errorless for now.
+For example, set the frame drop rate to 5\%:
 \begin{lstlisting}[style=ece361-shell-base, caption={}]
 ubuntu@ece361:~/lab2$ ./lab2-adjustLoss h1 5%
 \end{lstlisting}
-Let's change the frame size back to 1 for now:
 
-\begin{lstlisting}[style=ece361-shell-base, caption={Configuration For Large File}]
-{
-    "sender_address": "192.168.1.2",
-    "receiver_address": "192.168.1.1",
-    "receiver_port": 6789,
-    "arq_protocol": "stopandwait",
-    "timeout": null,
-    "frame_size": 1,
-    "window_size": 2,
-    "maxseqnum": 0
-}
-\end{lstlisting}
+Modify the configuration file and change the frame size back to 1 for now.
+%\begin{lstlisting}[style=ece361-shell-base, caption={Configuration For Large File}]
+%{
+%    "sender_address": "192.168.1.2",
+%    "receiver_address": "192.168.1.1",
+%    "receiver_port": 6789,
+%    "arq_protocol": "stopandwait",
+%    "timeout": null,
+%    "frame_size": 1,
+%    "window_size": 2,
+%    "maxseqnum": 0
+%}
+%\end{lstlisting}
+Re-run the \texttt{text\_file\_small.txt} with the \texttt{-{}-debug} option. What is the result and why?
 
-Rerun the \texttt{text\_file\_small.txt} with the \texttt{-{}-debug} option. What is the result and why?
+%-------------------------------------------------------------------------------------------------
+\subsubsection {Choosing a Timeout}
+%-------------------------------------------------------------------------------------------------
+When a frame is lost, the sender would be waiting forever for an the acknowledgement forever.
+To fix this, the sender needs an appropriate timeout for each frame, such that when the timeout occurs, the sender retransmits the previous frame.
+Based on your RTT calculation in the previous section, change the \texttt{"timeout"} field of the configuration file from \texttt{null} to an appropriate value (\textbf{Note:} The unit is in seconds, and floating point numbers are accepted).
 
-\subsubsection {Choosing a timeout}
-In the previous experiment you saw that the program hang because if a frame is lost the sender would be waiting for the acknowledgement forever.
-To fix this, we need an appropriate timeout such that when the timer expires the sender retransmits the previous frame.
-Based on your RTT calculation in the previous section, change the \texttt{"timeout"} field of the config file from \texttt{null} to an appropriate value (Note: the unit is second, and floating point number is accepted).
+\think{Should the timeout be based on the average or maximum RTT? Why?}
 
-\think{Should the timeout be based on the average or max RTT and why?}
-
-\noindent Now rerun the \texttt{text\_file\_small.txt} experiment and test if the transmission is successful.
-
-\noindent After you get the small file working, change the frame size to 1024 and try transmitting \texttt{binary\_file\_large}.
+Re-run the \texttt{text\_file\_small.txt} experiment and test if the transmission is successful.
+After you get the small file working, change the frame size to 1024 and try transmitting \texttt{binary\_file\_large}.
 
 \think{Can you figure a mathematical relationship between the expected frames sent, frames deliverd and the frame drop rate? Does the experimental result agree with your formula?}
 
-\subsection {Handling Lost ACK}
-Now let's enable frame lost from h1 to h2 as well.
+%-------------------------------------------------------------------------------------------------
+\subsection {Handling Lost ACKs}
+%-------------------------------------------------------------------------------------------------
+Now we will see the effect of frame loss for ACKs. Set a frame loss rate of 5\% for frames entering into h2.
 \begin{lstlisting}[style=ece361-shell-base, caption={}]
 ubuntu@ece361:~/lab2$ ./lab2-adjustLoss h2 5%
 \end{lstlisting}
 
-Change the frame size configuration back to 1:
-\begin{lstlisting}[style=ece361-shell-base, caption={Configuration For Large File}]
-{
-    "sender_address": "192.168.1.2",
-    "receiver_address": "192.168.1.1",
-    "receiver_port": 6789,
-    "arq_protocol": "stopandwait",
-    "timeout": <your choice>,
-    "frame_size": 1,
-    "window_size": 2,
-    "maxseqnum": 0
-}
-\end{lstlisting}
-Now rerun the \texttt{text\_file\_small.txt} experiment and examine the result. You should see something like this:
+Change the frame size configuration back to 1 and re-run the \texttt{text\_file\_small.txt} experiment.
+Examine the resulting file created by the receiver. You should see something similar to listing~\ref{lst:dup-frames}.
+The actual result varies from run to run, but the key here is duplicated frames.
+If you don't see duplicated frames then increase the frame drop rate (e.g. 10\%) and try the experiment again.
+%\begin{lstlisting}[style=ece361-shell-base, caption={Configuration For Large File}]
+%{
+%    "sender_address": "192.168.1.2",
+%    "receiver_address": "192.168.1.1",
+%    "receiver_port": 6789,
+%    "arq_protocol": "stopandwait",
+%    "timeout": <your choice>,
+%    "frame_size": 1,
+%    "window_size": 2,
+%    "maxseqnum": 0
+%}
+%\end{lstlisting}
 
-\begin{lstlisting}[style=ece361-shell-base, caption={}]
+\begin{lstlisting}[style=ece361-shell-base, caption={Example of duplicate frames being received.}, label={lst:dup-frames}]
 ubuntu@ece361-h1:~/lab2$ cat received.txt
 I only havee a few bytess.
 \end{lstlisting}
-The actual result varies from run to run, but the key here is duplicated frames.
-If you don't see duplicated frames then try again. If you still can't see it then you might want to increase the frame drop rate (e.g. from 5\% to 10\%).
 
-To explain what happened, since the ACK frame can be lost, the next frame the receiver received can either be a resend of the previous frame (due to lost ACK) or a new frame (if ACK successfully received by the sender).
-Without sequence numbers the receiver cannot distinguish betweeen these two cases.
-The sequence numbers are actually implemented already, you just need to enable it in the config.
-Set the \texttt{"maxseqnum"} field of the config file to any positive integer (e.g. 64).
+\think{Pause here and think if you can figure out why this happens.}
 
-\begin{lstlisting}[style=ece361-shell-base, caption={Configuration For Large File}]
-{
-    "sender_address": "192.168.1.2",
-    "receiver_address": "192.168.1.1",
-    "receiver_port": 6789,
-    "arq_protocol": "stopandwait",
-    "timeout": <your choice>,
-    "frame_size": 1,
-    "window_size": 2,
-    "maxseqnum": 64
-}
-\end{lstlisting}
+When an ACK frame is lost, the sender will eventually time out and re-send a frame.
+Without the use of sequence numbers to distinguish subsequent frames, the receiver cannot tell if a frame is a duplicate.
 
-Now rerun the \texttt{text\_file\_small.txt} experiment and you should see that the file gets successfully transmitted (no more duplicated frames).
+The implementation we have provided already supports sequence numbers, you just need to enable it in the configuration file.
+Set the \texttt{"maxseqnum"} field of the configuration file to any positive integer (e.g. 64) and re-run the \texttt{text\_file\_small.txt} experiment.
+You should see that the file gets successfully transmitted without duplicated frames.
+%\begin{lstlisting}[style=ece361-shell-base, caption={}]
+%{
+%    "sender_address": "192.168.1.2",
+%    "receiver_address": "192.168.1.1",
+%    "receiver_port": 6789,
+%    "arq_protocol": "stopandwait",
+%    "timeout": <your choice>,
+%    "frame_size": 1,
+%    "window_size": 2,
+%    "maxseqnum": 64
+%}
+%\end{lstlisting}
 
-Finally, let's test the fully implemented stop-and-wait ARQ protocol on \texttt{binary\_file\_large}. Set the frame size back to 1024:
-\begin{lstlisting}[style=ece361-shell-base, caption={Configuration For Large File}]
-{
-    "sender_address": "192.168.1.2",
-    "receiver_address": "192.168.1.1",
-    "receiver_port": 6789,
-    "arq_protocol": "stopandwait",
-    "timeout": <your choice>,
-    "frame_size": 1024,
-    "window_size": 2,
-    "maxseqnum": 64
-}
-\end{lstlisting}
+Finally, let's test the fully implemented stop-and-wait ARQ protocol on \texttt{binary\_file\_large}. Set the frame size back to 1024 and re-run the experiment.
+You might need to wait for a while for the transmission to finish. When it does, verify that the file gets successfully transmitted using \texttt{diff}.
 
-From the h1 terminal:
-\begin{lstlisting}[style=ece361-shell-base, caption={}]
-ubuntu@ece361-h1:~/lab2$ python3 receiver.py received
-\end{lstlisting}
+%\begin{lstlisting}[style=ece361-shell-base, caption={Configuration For Large File}]
+%{
+%    "sender_address": "192.168.1.2",
+%    "receiver_address": "192.168.1.1",
+%    "receiver_port": 6789,
+%    "arq_protocol": "stopandwait",
+%    "timeout": <your choice>,
+%    "frame_size": 1024,
+%    "window_size": 2,
+%    "maxseqnum": 64
+%}
+%\end{lstlisting}
 
-From the h2 terminal:
-\begin{lstlisting}[style=ece361-shell-base, caption={}]
-ubuntu@ece361-h2:~/lab2$ python3 sender.py binary_file_large
-\end{lstlisting}
+%From the h1 terminal, run: \texttt{python3 receiver.py received}.
+%\begin{lstlisting}[style=ece361-shell-base, caption={}]
+%ubuntu@ece361-h1:~/lab2$ python3 receiver.py received
+%\end{lstlisting}
 
-\noindent You might need to wait for a while for the transmission to finish. Verify that the file gets transmitted successfully using \texttt{diff}.
-\begin{lstlisting}[style=ece361-shell-base, caption={}]
-ubuntu@ece361-h1:~/lab2$ diff binary_file_large received
-\end{lstlisting}
+%From the h2 terminal, run: \texttt{python3 sender.py binary\_file\_large}.
+%\begin{lstlisting}[style=ece361-shell-base, caption={}]
+%ubuntu@ece361-h2:~/lab2$ python3 sender.py binary_file_large
+%\end{lstlisting}
+
+%You might need to wait for a while for the transmission to finish. When it does, verify that the file gets successfully transmitted using \texttt{diff}.
+%\begin{lstlisting}[style=ece361-shell-base, caption={}]
+%ubuntu@ece361-h1:~/lab2$ diff binary_file_large received
+%\end{lstlisting}
 
 If the previous experiment succeeds, congratulations! You have a fully working stop-and-wait ARQ.
 Now open the \texttt{stopwaitsender.py} file and have a look at the \texttt{\_arqsend} function.
-You should understand the code at a high level before proceeding to the next section. You only need to understand what the API calls in that function are doing (you do not need to understand the details of how the APIs work under-the-hood).
+You should understand the code at a high level before proceeding to the next section.
+You only need to understand what the API calls in that function are doing (you do not need to understand the details of how the APIs work under-the-hood).
 Also, you only need to look at that one single function, you do not need to read other parts of the code.
 However, if you are interested, you can read the entire code-base since we made all the source code available to you.
 
@@ -534,9 +558,9 @@ However, if you are interested, you can read the entire code-base since we made 
 In this section, you will complete the implementation of a sender that uses the Send Many, Receive One ARQ protocol.
 
 %-------------------------------------------------------------------------------------------------
-\subsection{Change the Config File to Use Sliding Window ARQ}
+\subsection{Change the Configuration File to Use Sliding Window ARQ}
 %-------------------------------------------------------------------------------------------------
-Change the \texttt{"arq\_protocol"} field of the config file from \texttt{"stopandwait"} to \texttt{"slidingwindow"}.
+Change the \texttt{"arq\_protocol"} field of the configuration file from \texttt{"stopandwait"} to \texttt{"slidingwindow"}.
 Make sure \texttt{"window\_size"} is an integer greater than 1.
 Make sure \texttt{"maxseqnum"} is at least \texttt{"window\_size"}.
 Keep other parameters (e.g. timeout) the same as previous section.
@@ -586,7 +610,7 @@ This is where sliding window ARQ comes in, as illustrated in Figure~\ref{sliding
 \figvs{0.4}{sw}{trim=0cm 0cm 0cm 0cm,clip}{Stop-and-Wait ARQ Timing Diagram}
 \figvs{0.4}{sliding}{trim=0cm 0cm 0cm 0cm,clip}{Sliding Window ARQ Timing Diagram}
 
-A sliding window can be implemented on both the sender and the receiver side, but for this lab, we only consider sliding window on the sender side and the receiver still accepts one packet
+A sliding window can be implemented on both the sender and the receiver side, but for this lab, we only consider sliding window on the sender side and the receiver still accepts one frame
 at a time, similar to a stop-and-wait receiver. This makes our protocol behave like "Send Many, Receive One".
 
 Note that one needs to make sure that the sliding window is implemented correctly.
