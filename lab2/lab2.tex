@@ -639,21 +639,21 @@ As illustrated in Figure~\ref{sliding_error}, frame 0 is retransmitted after som
 Consider the case in Figure~\ref{ack_multi}. Frames 0, 1, 2, and 3 all transmitted successfully but the ACKs are all lost.
 From the sender's point of view there is no difference to the case where the frames are lost, so it retransmits frame 0.
 When the receiver receives the duplicate frame 0, it should send acknowledgements for frames 0, 1, 2 and 3 since those frames have all been received.
-However, a more bandwidth efficient way is to use what is called a "culmulative ACK", in which the receiver only sends an ACK for frame 3 (ACK 4), implying that frames 0 through 3 have all been received.
+However, a more bandwidth efficient way is to use what is called a "cumulative ACK", in which the receiver only sends an ACK for frame 3 (ACK 4), implying that frames 0 through 3 have all been received.
 When the sender receives this ACK, it immediately sends frame 4, as illustrated in the figure.
-Note that if the sender does not know about culmulative ACKs it won't be able to correctly communicate with the receiver.
-\figvs{0.4}{ack_multi}{trim=0cm 0cm 0cm 0cm,clip}{Culmulative ACK}
+Note that if the sender does not know about cumulative ACKs it won't be able to correctly communicate with the receiver.
+\figvs{0.4}{ack_multi}{trim=0cm 0cm 0cm 0cm,clip}{Cumulative ACK}
 
 In the same way, when an ACK for a certain frame is received, it is implied that all frames earlier than that frame were also correctly received, even if their ACKs never arrived. This case is illustrated in Figure~\ref{ack_multi_handle}.
 Upon receiving the ACK, the sender can immediately start transmitting the next frame.
-\figvs{0.4}{ack_multi_handle}{trim=0cm 0cm 0cm 0cm,clip}{Culmulative ACK Handling}
+\figvs{0.4}{ack_multi_handle}{trim=0cm 0cm 0cm 0cm,clip}{Cumulative ACK Handling}
 
-There is an implementation detail on what the sender should do upon receiving a culmulative ACK half way through transmitting the send window.
+There is an implementation detail on what the sender should do upon receiving a cumulative ACK half way through transmitting the send window.
 The best implementation is shown in Figure~\ref{ack_multi_handle}, where the sender aborts the current send window and immediately start sending the frame with the correct sequence number.
 However, this is sometimes challenging to implement.
 Therefore, in this lab, you will do a simpler but less efficient implementation as illustrated in Figure~\ref{ack_multi_handle2}, where the sender is allowed to finish the current send window and then start sending the correct frame.
 This is less efficient due to extra duplicated frames being sent, but easier to implement.
-\figvs{0.4}{ack_multi_handle2}{trim=0cm 0cm 0cm 0cm,clip}{Culmulative ACK Handling (Simpler Implementation)}
+\figvs{0.4}{ack_multi_handle2}{trim=0cm 0cm 0cm 0cm,clip}{Cumulative ACK Handling (Simpler Implementation)}
 
 Finally, there is one last case we need to cover, which is frames that arrive out of order.
 As illustrated in Figure~\ref{nack}, if frames 0 is lost, frames 1, 2, 3 will be considered to be out of order by the receiver.
