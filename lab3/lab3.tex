@@ -6,9 +6,9 @@
 
 % Lab parameters
 \def\thelab{3}
-\def\datedue{Mar. 6, 2020 @ 3 PM}
+\def\datedue{Mar. 7, 2020 @ 12:59 PM}
 
-\useCompactTitle{ECE361 Lab \thelab}{Lab Title Here}
+\useCompactTitle{ECE361 Lab \thelab}{Flow Control and Congestion Control}
 
 %-------------------------------------------------------------------------------------------------
 \begin{document}
@@ -23,24 +23,479 @@
 \section{Overview}
 \label{sec:overview}
 %-------------------------------------------------------------------------------------------------
-\textbf{TODO}
+Congestion control and flow control are important features of the TCP protocol. They play an important role in reducing network congestion and improving the efficiency of the channel utilization. In this lab, you will implement flow control and a simple version of congestion control. In the last lab, you implemented a Send Many, Receive One ARQ protocol. In this lab, you will implement a Send Many, Receive Many ARQ protocol to provide support for flow control.
 
 %-------------------------------------------------------------------------------------------------
-\section{TA Grading}
-\label{sec:tagrading}
+\section{Lab Initialization}
+\label{subsec:lab-init}
 %-------------------------------------------------------------------------------------------------
-\textbf{TODO}
+Similar to lab 2, this lab provides starter code and a custom-built Python 3 library called \texttt{ece361}. A Python virtual environment will be provided once the lab is initialized. All Python code in this lab should be run in the provided virtual environment. To run the initialization script for lab 3, open a terminal and execute \texttt{ece361-lab-init 3}. You should see a similar output as listing \ref{lst:init-example}.
+
+\begin{lstlisting}[style=ece361shell, caption={Initializing lab \thelab.}, label={lst:init-example}]
+ubuntu@ece361:~$ ece361-lab-init (@"\thelab"@)
+Finding available UG EECG host...
+Warning: Permanently added 'ug251.eecg.utoronto.ca,128.100.13.251' (ECDSA) to the list of known hosts.
+Creating working directory for lab (@"\thelab"@) at (@"\btHL /home/ubuntu/lab\thelab"@)
+Creating Python3 virtual environment...
+Installing libraries...
+
+...
+
+Done. Now run (@"\btHL source /home/ubuntu/lab\thelab/sourceMe"@) to activate the virtual environment.
+\end{lstlisting}
+
+The initialization script creates a working directory for this lab, located at \texttt{\textasciitilde/lab\thelab}. To activate the virtual environment, run the source command as shown in listing \ref{lst:init-example}. Once the virtual environment is activated, you should see a \texttt{(.venv)} appear at the beginning of your prompt.
+
+\point{You will need to activate the virtual environment \textbf{in each terminal} that runs code belonging to this lab.}
+
+\warn{The \texttt{ece361} library used in this lab is different than the ones from the previous two labs. Your code from the previous labs will not work in this new virtual environment.}
+
+In your lab \thelab~working directory, you should have the following files:
+\begin{itemize}
+    \item \texttt{lab3-createNet}, \texttt{lab3-enterHost}, \texttt{add-load}, and \texttt{scripts} directory
+        \begin{itemize}
+            \item Various scripts for setting up and configuring the lab's virtual network.
+        \end{itemize}
+
+    \item \texttt{sender.py} and \texttt{receiver.py}
+        \begin{itemize}
+            \item The primary files you will run during this lab. You will need to complete the code in \texttt{receiver.py}.
+        \end{itemize}
+
+    \item \texttt{senderbase.py}, \texttt{flow\_control\_sender.py}, and \texttt{congestion\_control\_sender.py}
+        \begin{itemize}
+            \item Base sender class and two derived classes (which you will have to finish implementing).
+        \end{itemize}
+
+    \item \texttt{config.json}
+        \begin{itemize}
+            \item Configuration file that will be read by the sender and receiver.
+        \end{itemize}
+
+    \item \texttt{binary\_file\_large},  \texttt{text\_file\_small.txt}, \texttt{text\_file\_medium.txt}, \texttt{text\_file\_large.txt}, and \texttt{video1.mp4}
+        \begin{itemize}
+            \item Test files you will use during this lab. More specifically, these are files that can be sent by the sender to the receiver.
+        \end{itemize}
+
+    \item \texttt{test\_configs} directory
+        \begin{itemize}
+            \item A directory containing configuration files that you can used to test your implementation.
+        \end{itemize}
+
+\end{itemize}
+
+\point{If you discover a bug in any of the files provided, please report it on Piazza.}
+
+\section{Provided Scripts}
+\label{sec:provided-scripts}
+%-------------------------------------------------------------------------------------------------
+This section will provide an overview of the scripts provided to you as part of this lab, and show examples of their usage.
+
+%-------------------------------------------------------------------------------------------------
+\subsection{Virtual Network}
+%-------------------------------------------------------------------------------------------------
+Similar to lab 2, you will create a virtual network consisting of two hosts connected via a single switch\footnote{A network switch is a type of packet forwarding device}, all fully emulated within your virtual machine (VM).
+A script named \texttt{lab3-createNet} has been provided to you within the lab working directory, which will create the virtual network with the topology described.
+When you run the script, you should see something similar to listing~\ref{lst:create-virtual-net}.
+
+\begin{lstlisting}[style=ece361shell, caption={Creating the virtual network.}, label={lst:create-virtual-net}]
+ubuntu@ece361:~/lab3$ ./lab3-createNet
+Creating new virtual network (2 hosts, 1 switch)...
+Configuring host IP addresses...
+Done.
+
+
+Created two hosts with (ID: IP):
+        h1: 192.168.1.1
+        h2: 192.168.1.2
+
+\end{lstlisting}
+
+The virtual network's two hosts, as seen in listing~\ref{lst:create-virtual-net}, has been assigned IPs \texttt{192.168.1.1} and \texttt{192.168.1.2}.
+
+Different from lab 2, the virtual network created in this lab limits the bandwidth between the two hosts to 10 Mbps. This configuration will allow you to more easily test and see the effects of the congestion control protocol.
+
+
+%-------------------------------------------------------------------------------------------------
+\subsection{Entering a Virtual Host}
+%-------------------------------------------------------------------------------------------------
+To run commands from within one of the virtual hosts, you will need to first "enter" it using the \texttt{lab3-enterHost} script provided to you.
+See listing~\ref{lst:become-host} for an example of how to run the script.
+
+\begin{lstlisting}[style=ece361shell, caption={Entering into one of the virtual hosts.}, label={lst:become-host}]
+ubuntu@"ece361":~/lab3$ ./lab3-enterHost h1
+ubuntu@"ece361-h1":~/lab3$
+ubuntu@ece361-h1:~/lab3$ ifconfig
+h1-eth0   Link encap:Ethernet  HWaddr 1a:8f:9d:d2:0c:99
+          inet addr:192.168.1.1  Bcast:192.168.1.255  Mask:255.255.255.0
+...
+\end{lstlisting}
+
+In the example shown in listing~\ref{lst:become-host}, note the changed command-line prompt, which indicates that the terminal is now within virtual host h1.
+Running \texttt{ifconfig} as shown, note the interface has an IP of \texttt{192.168.1.1}, as expected for this particular host.
+
+To test the communication between virtual hosts h1 and h2, first enter h1 on an open terminal, and ping\footnote{"ping" is a command-line utility to test connectivity between hosts. It is also often used as a verb.} \texttt{192.168.1.2}.
+If the virtual network is functioning correctly, the ping should work, as seen in listing~\ref{lst:ping-h2}. If the ping is not working, exit the host and try re-creating the virtual network to re-test.
+
+\begin{lstlisting}[style=ece361shell, caption={Pinging h2 from within h1.}, label={lst:ping-h2}]
+ubuntu@ece361-h1:~/lab2$ ping -c 4 192.168.1.2
+PING 192.168.1.2 (192.168.1.2) 56(84) bytes of data.
+64 bytes from 192.168.1.2: icmp_seq=1 ttl=64 time=0.056 ms
+64 bytes from 192.168.1.2: icmp_seq=2 ttl=64 time=0.060 ms
+64 bytes from 192.168.1.2: icmp_seq=3 ttl=64 time=0.046 ms
+64 bytes from 192.168.1.2: icmp_seq=4 ttl=64 time=0.076 ms
+
+--- 192.168.1.2 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 2997ms
+rtt min/avg/max/mdev = 0.046/0.059/0.076/0.013 ms
+\end{lstlisting}
+
+\hint{If you wish to exit the virtual host at any point, simply type \texttt{exit} on the command-line.}
+
+%-------------------------------------------------------------------------------------------------
+\subsection{Creating Network Load}
+For congestion control, we need to evaluate the protocol's performance under a congested network. To create background network traffic, we have provided you with a script called \texttt{add-load}. This script will create UDP traffic that takes up a certain amount bandwidth in your network. Using the \texttt{add-load} script, you can create two kinds of network load: 1. static load with fixed (i.e. constant) bandwidth; and 2. dynamic load where the bandwidth changes between 7 Mbps and 10 Mbps.
+
+\begin{enumerate}
+    \item \textbf{Static Load}: To create static background traffic, you can invoke the command in the following way:
+
+    \texttt{add-load [load size in mbps] [duration in seconds]}
+
+    \textbf{Example}: To create a network load with 5 Mbps that runs for 1 minute, you do:
+
+    \texttt{./add-load 5m 60}
+
+    \item \textbf{Dynamic Load}: To create dynamic background traffic that switches between 7 Mpbs and 10 Mbps, you can run the commend as follows:
+
+    \texttt{add-load dynamic [duration in seconds] [bandwidth change interval (optional)]}
+
+    The bandwidth change interval refers to how often the background bandwidth changes. It is optional and the default interval is 3 seconds.
+
+    \textbf{Example}: To create a dynamic network load that runs for 30 seconds and switch the background traffic bandwidth every 5 seconds, you do:
+
+    \texttt{./add-load dynamic 30 5}
+
+    \item \textbf{Stop Load}: To stop the network background traffic generation, you can run the following:
+
+    \texttt{./add-load stop 0}
+\end{enumerate}
+%-------------------------------------------------------------------------------------------------
+
+\section{Configuration File}
+Similar to lab 2, this lab uses a JSON configuration file to customize the behaviour of the senders and the receiver. We have added the following new fields to support the requirements of this lab:
+
+\begin{itemize}
+    \item \textbf{sender\_max\_window\_size}
+    \begin{itemize}
+        \item The maximum window size for the sender window (intended mainly for the congestion control portion of the lab in Section~\ref{sec:congestion_control}).
+    \end{itemize}
+
+    \item \textbf{sender\_window\_size}
+    \begin{itemize}
+        \item The default or initial window size for the sender window.
+    \end{itemize}
+
+    \item \textbf{receiver\_window\_size}
+    \begin{itemize}
+        \item The receiver window size.
+    \end{itemize}
+
+    \item \textbf{application\_wait\_time}
+    \begin{itemize}
+        \item The time interval between two consecutive reads performed by the application process.
+    \end{itemize}
+
+    \item \textbf{application\_max\_read\_bytes}
+    \begin{itemize}
+        \item The maximum number of bytes the application process can read each time. -1 means no limit on the number of bytes to read.
+    \end{itemize}
+
+    \item \textbf{keepalive\_timeout}
+    \begin{itemize}
+        \item Timeout for the keep-alive feature. You can keep this set to 0.1 and you should not need to use this configuration parameter.
+    \end{itemize}
+
+    \item \textbf{use\_flow\_control}
+    \begin{itemize}
+        \item A flag for enabling/disabling flow control.
+    \end{itemize}
+
+    \item \textbf{protocol}
+    \begin{itemize}
+        \item This field exists in lab 2. The options in this lab for this field are different. The options are: \texttt{flow\_control} and \texttt{congestion\_control}.
+    \end{itemize}
+
+\end{itemize}
+
+
+
+\section{Flow Control}
+
+In this section, you will implement flow control on top of UDP.
+
+\subsection{Send Many, Receive Many Protocol}
+In lab 2, you implemented a Send Many, Receive One ARQ. To further improve the efficiency and use flow control, we will first change the receiver to have a window size greater than 1 and implement the Send Many, Receive Many protocol.
+
+\subsubsection{Detailed Description}
+The version of Send Many, Receive Many protocol you are implementing is similar to the one used by TCP. The following are some of the main points:
+\begin{itemize}
+    \item \textbf{Cumulative ACK}: The receiver sends cumulative ACKs to the sender with the ACK number being the next sequence number the receiver expects to receive. Outstanding sequence numbers prior to the received ACK number are implicitly ACKed as well. There is no NACK in this system.
+    \item \textbf{Per-Byte Sequence Number}: In lab 2, for simplicity, each sequence number represented a single frame. In this lab, we move to a more realistic scenario where sequence numbers are per-byte. For example, if a sender sends a frame with a payload size of 10 bytes and sequence number 2, the receiver should send back an ACK with sequence number 12.
+    \item \textbf{Per-Frame ACK}: The receiver sends ACK only when a complete frame is successfully delivered. It does not send ACK if only part of a frame is received, even though the sequence number is per byte.
+    \item \textbf{Fixed Receiver Window Size}: In this part of the lab, you will consider a receiver with a fixed window size.
+    \item \textbf{Single Timeout Timer}: In this lab, you will implementing a Send Many, Receive Many protocol with a single timeout timer (similar to TCP's implementation). We call this timer a Retransmission Timeout Timer (RTO Timer). The details of this timer will be discussed in Subsection~\ref{rto_timer}. A separate timer is used for RTT measurements.
+\end{itemize}
+
+
+
+\subsubsection{Retransmission Timeout (RTO)}
+\label{rto_timer}
+When using only a single timer, we need to consider how we manage the timeout. The following is how you will use the timer:
+
+\begin{itemize}
+    \item \textbf{Start RTO timer}: When a frame is sent and the RTO timer is not running, start the RTO timer.
+    \item \textbf{Restart RTO timer}: When an ACK for a new sequence number is received, restart the timer.
+    \item \textbf{Stop RTO timer}: When end-of-file is reached, and all the messages in the send queue are acknowledged, stop the RTO timer.
+    \item \textbf{Timeout}: When timeout happens, retransmit the first unacknowledged frame and restart the timer.
+\end{itemize}
+
+To implement RTO timer and RTT timer, you may find the SenderBase.TimerStatus helpful. Refer to the comments in the SenderBase file for more details.
+
+\subsubsection{Round Trip Time (RTT) Calculation}
+
+To avoid conflict with the RTO timer, you will use a separate timer for measuring RTT. Since we are also using a single timer for measuring RTT, the RTT is calculated based on the time difference between sending one frame and receiving its ACK. Since the receiver uses cumulative ACKs, it will not explicitly ACK every frame; so if an ACK implicitly confirms the frame we are measuring, we can use the received time of that ACK. A detailed illustration of how RTT is calculated is show in Figure~\ref{rto_rtt}.
+
+\figvs{1}{rto_rtt}{trim=0cm 0cm 0cm 0cm,clip}{Single timer RTT calculation}
+
+\warn{Note that you will need to ignore retransmitted frames as the RTT will not be accurate for that frame.}
+
+%TODO: talk about the RTO status in the Appendix
+
+
+\subsubsection{Implementing the Receiver}
+You will begin by completing the receiver, implemented within the \texttt{receiver.py} file. We have provided you the main structure of the receiver, and you will need to complete some functions. A \texttt{"Your code here"} comment is shown at locations where you will add your code. The correctness of the following functions may be tested in the exercise and marking, so make sure you do not change the interfaces of the functions.
+Functions that may be tested:
+\begin{itemize}
+    \item \texttt{\_get\_flow\_control\_window()}
+    \item \texttt{insert\_packet\_to\_queue(seqnum, data)}
+    \item \texttt{\_check\_if\_seqnum\_is\_valid(seqnum)}
+    \item \texttt{update\_r\_next()}
+    \item \texttt{application\_get\_data(max\_bytes=None)}
+\end{itemize}
+
+You may find the \textbf{\texttt{NetworkBuffer}} data structure to useful when implementing the receiver. Refer to the Section \ref{appendix_networkbuffer} for details regarding the \texttt{NetworkBuffer} data structure.
+%Note that the receiver implementation in lab 3 is based on polling. That is it sequential executes the tasks of the receiver. This is different from lab 2 as lab 2 relies on the timeout interrupt. %TODO: is it correct?
+
+Note that the \texttt{ApplicationProcess} class is provided in the \texttt{ece361} library and you will not be able to change it. This is desirable as the network layer's functionality should not depend on the operation of the application.
+
+\hint{Since the receiver uses a polling based method to check for incoming frames, it will have a higher CPU utilization. To reduce CPU utilization, you may uncomment the \texttt{time.sleep(0.0001)} line towards the end of the receiver file. You can adjust the time, but make sure you comment it when running exercise and submit for marking. Same applies for the sender files.}
+
+\subsubsection{Implementing the Sender}
+%Next, you will implement the sender.
+In this section, you will complete the implementation of the sender in the \texttt{flow\_control\_sender.py} file. The locations where you will need to add your code is shown in the file's comments. The RTO timer and RTT measurement need to be implemented in the sender. The correctness of the following functions in the flow control sender may be tested:
+
+\begin{itemize}
+    \item \texttt{\_update\_send\_queue(ack\_seqnum)}
+    \item \texttt{calc\_window\_size()}
+    \item \texttt{\_send\_frames\_in\_queue(max\_frames=None)}
+    \item \texttt{\_check\_timeout()}
+\end{itemize}
+
+%\textbf{Note} that a keep-alive mechanism is provide in both the sender's and the receiver's skeleton code to help you handle a corner case related to TCP stall.
+
+\subsubsection{Execute your code and measurement performance}
+\label{mm_execute}
+Once you have finished the above implementation, you can run it to measure the performance.
+You will run the receiver in h1 and the sender in h2. Similar to lab 2, you will need to open two terminals, one for h1 and one for h2.
+
+In the \textbf{terminal for h1}, you need to execute the following:
+\begin{enumerate}
+    \item Enter the h1 host: \texttt{./lab3-enterHost h1}
+    \item Activate virtual environment: \texttt{source sourceMe}
+    \item Run receiver:\\
+    \texttt{python3 receiver.py received -{}-config-file \textbackslash\\ test\_configs/config\_mm\_32768\_vs\_4096\_slow.json}
+\end{enumerate}
+
+In the \textbf{terminal for h2}, you need to execute the following:
+\begin{enumerate}
+    \item Enter the h2 host: \texttt{./lab3-enterHost h2}
+    \item Activate virtual environment: \texttt{source sourceMe}
+    \item Run receiver: \\
+    \texttt{python3 sender.py text\_file\_medium.txt -{}-config-file \textbackslash\\ test\_configs/config\_mm\_32768\_vs\_4096\_slow.json -{}-verbose}
+\end{enumerate}
+
+The above commands for the sender and receiver use the test configuration files provided along with the skeleton code. You can also customize \texttt{config.json} and use that for your development and testing. The \texttt{\textbf{-{}-verbose}} flag is use to periodically (every 5 seconds) print the sender's statistics and show its progress. It is intended to help you with your implementation and debugging. This flag only works for the sender. The \texttt{\textbf{-{}-debug}} is also available, and it works similar to lab 2.
+
+\subsection{Flow Control}
+
+You will now implement flow control on top of the Send Many, Receive Many protocol.
+
+\subsubsection{Implementing the Sender and Receiver}
+To implement flow control on top of the Send Many, Receive Many protocol, the receiver will need to send information regarding its flow control window size to the sender. The \texttt{send\_ack()} function supports sending ACKs containing information about the flow control window size. When you call the \texttt{send\_ack()} function, you simply provide the flow control window size as the argument. The sender will need to act accordingly based on the receiver's flow control window size.
+
+\point{There is a constructor parameter in the \texttt{FlowControlSlidingWindowSender} class called \texttt{use\_flowcontrol} which is a boolean flag intended for enabling/disabling flow control. Make sure you provide flow control in the sender only when this flag is set to \texttt{True}.}
+
+
+\subsubsection{Executing Your Code and Measuring Performance}
+\label{fc_execute}
+To measure the performance, you can follow the procedure from Subsection~\ref{mm_execute} with the \texttt{test\_configs/config\_fc\_32768\_vs\_4096\_slow.json} config file. That is:
+
+\noindent Run the receiver in \textbf{h1} with:\\
+\texttt{python3 receiver.py received -{}-config-file \textbackslash\\
+test\_configs/config\_fc\_32768\_vs\_4096\_slow.json}
+
+\noindent Run the sender in \textbf{h2} with:\\
+\texttt{python3 sender.py text\_file\_medium.txt -{}-config-file \textbackslash\\
+test\_configs/config\_fc\_32768\_vs\_4096\_slow.json -{}-verbose}
+
+\think{How does the result with flow control differ from the result with only the Send Many, Receive Many protocol in Subsection~\ref{mm_execute}? Do you see higher efficiency (i.e. frames delivered / frames sent)?}
+
+Note that it is still reasonable to see frame drop with flow control if you assume the initial sender window size is high. If you assume initial sender window is low, then you should not see any frame drop under a network with not loss.
+
+%-------------------------------------------------------------------------------------------------
+\section{Congestion Control}
+\label{sec:congestion_control}
+%-------------------------------------------------------------------------------------------------
+In this section, you will implement a simple version of congestion control. In the lectures, you have learned about two phases of congestion control in TCP: slow start and congestion avoidance. In this lab, you will implement a simple one with only slow start. Recall that the slow start method increments the sender window by one frame size for each valid ACK received.
+
+\subsection{Implementing Congestion Control}
+We will implement congestion control on top of the flow control sender and receiver you have implemented. For the sender, we will use add your implementation to the \texttt{congestion\_control\_sender.py} file. Note that this file is very similar to \texttt{flow\_control\_sender.py}, and you can feel free to copy your code from \texttt{flow\_control\_sender.py} to this file.
+
+\subsection{Executing Your Code and Measuring Performance}
+You can follow the procedure from Subsection~\ref{mm_execute}, but with different configuration files. You can configure the sender window in the configuration file to be the same as the frame size as the initial value, and let the congestion control algorithm dynamically manage the sender window size for you.
+
+To see the effect of the congestion control algorithm, you will need to use the \texttt{add-load} script to add background traffic to your virtual network.
+
+To help you compare congestion control and fixed sender window size, we have provided some reference configuration files in the \texttt{test\_configs} directory. The following is a description of the configuration files:
+\begin{itemize}
+    \item \textbf{config\_cc.json}: congestion control configuration file with sender window initialized to the same as the frame size
+    \item \textbf{config\_fc\_ws\_4096.json}: configuration file with fix sender window size of 4096 (i.e. only flow control is enabled)
+    \item \textbf{config\_fc\_ws\_8192.json}: configuration file with fix sender window size of 8192 (i.e. only flow control is enabled)
+    \item \textbf{config\_fc\_ws\_16384.json}: configuration file with fix sender window size of 16384 (i.e. only flow control is enabled)
+    \item \textbf{config\_fc\_ws\_32768.json}: configuration file with fix sender window size of 32768 (i.e. only flow control is enabled)
+\end{itemize}
+
+The following are the steps to run these configurations:
+
+\noindent Run receiver in \textbf{h1} with:\\
+\texttt{python3 receiver.py received.mp4 -{}-config-file [config file path]}
+
+\noindent Run sender in \textbf{h2} with:\\
+\texttt{python3 sender.py video1.mp4 -{}-config-file [config file path] -{}-verbose}
+
+\noindent You can also send other test files available within the lab3 directory such as \texttt{binary\_file\_large} and \texttt{text\_file\_large.txt}, or any other files you'd like.
+
+\think{Under dynamic load or static load, does congestion control perform better than the fixed sender window flow control implementation from Subsection~\ref{fc_execute}?}
+
+To help you understand how the congestion control algorithm behave, it would be a good idea to plot how the congestion control window changes over time. You can log your output to a file and plot it using tools such as Excel or Google Sheets.
 
 %-------------------------------------------------------------------------------------------------
 \section{Exerciser}
 \label{sec:exercise}
 %-------------------------------------------------------------------------------------------------
-\textbf{TODO}
+You can use the exerciser to help test the correctness of your implementation. The exerciser will run a set of public test cases against your code. However, note that the tests in the exerciser is not complete and it is your responsibility to test your code to make sure it conforms to the requirement of the lab.
+Ensure you have the following files all within the same directory:
+\begin{itemize}
+    \item \textbf{receiver.py}: Your completed receiver code.
+    \item \textbf{flow\_control\_sender.py}: Your completed flow control sender code.
+    \item \textbf{congestion\_control\_sender.py}: Your completed congestion control sender code.
+
+\end{itemize}
+
+In terminal, browse to the directory containing the files and type \texttt{ece361-exercise \thelab}.
 
 %-------------------------------------------------------------------------------------------------
 \section{Submission}
 \label{sec:submission}
 %-------------------------------------------------------------------------------------------------
-\textbf{TODO}
+Once you are confident of your implementation, you can run the submission process (which will invoke the exerciser before submitting).
+Only one person in the group needs to submit.
+
+From the same directory as where you ran the exerciser, type \texttt{ece361-submit submit \thelab}.
+
+You can then verify the submission by typing \texttt{ece361-submit list \thelab}.
+
+At some point after the lab's due date, private test cases will be run against your submission to calculate your final mark.
+%-------------------------------------------------------------------------------------------------
+
+\newpage
+\appendix
+\section{Appendix}
+\label{sec:appendix}
+%-------------------------------------------------------------------------------------------------
+
+%-------------------------------------------------------------------------------------------------
+\subsection{The NetworkBuffer Class}
+\label{appendix_networkbuffer}
+%-------------------------------------------------------------------------------------------------
+To simplify the implementation for the receiver, we have provided you with a ring buffer data structure with indexing capability called \texttt{NetworkBuffer}. The source code of this data structure can be found at the following location:
+
+\noindent\texttt{/home/ubuntu/lab3/.venv/lib/python3.5/site-packages/ece361/network\_buffer.py}
+
+The \texttt{NetworkBuffer} data structure provides functionality similar to a ring buffer. It has a fixed length, and each index of the buffer stores one byte. You can insert a frame's payload at any index, and the \texttt{NetworkBuffer} will handle the index wrap-around for you. The \texttt{NetworkBuffer} will also store the indexes of the first byte of each piece of data inserted and its related metadata.
+
+The following are the available API methods of \texttt{NetworkBuffer}:
+\begin{itemize}
+    \item \textbf{is\_start\_of\_frame(idx)}: Returns \texttt{True} if the provided index of the buffer is the start of a frame payload, else it returns \texttt{False}. The argument is:
+    \begin{itemize}
+        \item \textbf{idx}: A buffer index.
+    \end{itemize}
+
+    \item \textbf{get\_buffer()}: Returns the buffer list object. This can be used to see what is in the buffer.
+
+    \item \textbf{frame\_exist(start\_idx)}: Returns \texttt{True} if a frame exist at the provided start position of the buffer (same as the is\_start\_of\_frame), else it returns \texttt{False}. The argument is:
+    \begin{itemize}
+        \item \textbf{start\_idx}: The start buffer index of the frame.
+    \end{itemize}
+
+    \item \textbf{pop\_frame(start\_idx)}: Returns the frame at the specified index from the buffer and remove it from the buffer. Returns \texttt{None} if no frame starts at the specified index. The argument is:
+    \begin{itemize}
+        \item \textbf{start\_idx}: The start buffer index of the frame.
+    \end{itemize}
+
+    \item \textbf{get\_frame(start\_idx)}: Return a copy of the frame at the specified index, while keeping the frame in the buffer. Returns \texttt{None} if no frame starts at the specified index. The argument is:
+    \begin{itemize}
+        \item \textbf{start\_idx}: The start buffer index of the frame.
+    \end{itemize}
+
+    \item \textbf{insert\_frame(start\_idx, data, frame\_metadata=\{\})}: Insert frame at the provided start index with optional metadata to be inserted along with the frame payload. Returns \texttt{True} if the insert is successful, else it returns \texttt{False}. The arguments are:
+    \begin{itemize}
+        \item \textbf{start\_idx}: The start buffer index of the frame.
+        \item \textbf{data}: The data to be inserted into the buffer (only the payload of a frame should be inserted).
+        \item \textbf{frame\_metadata}: A dictionary\footnote{Dictionary data structure: https://docs.python.org/3.5/library/stdtypes.html\#typesmapping} containing key-value pairs of any metadata/header information you would like to store with this frame (e.g. sequence number, etc.).
+    \end{itemize}
+
+    \item \textbf{get\_frame\_length(start\_idx)}: Return the length of the frame at the specified index. Returns \texttt{None} if no frame starts at the specified index. The argument is:
+    \begin{itemize}
+        \item \textbf{start\_idx}: The start buffer index of the frame.
+    \end{itemize}
+
+    \item \textbf{get\_frame\_metadata(start\_idx, metadata\_name)}: Return the metadata related to the frame at the specified index. Returns \texttt{None} if no frame starts at the specified index, or if no metadata with the specified name is found. The arguments are:
+    \begin{itemize}
+        \item \textbf{start\_idx}: The start buffer index of the frame.
+        \item \textbf{metadata\_name}: The name (key) of the metadata value you want to return.
+    \end{itemize}
+
+You can enable debug for this class by initializing it with the debug flag set to True. For example:
+
+\begin{lstlisting}[caption={}, language=Python]
+frameBuffer = NetworkBuffer(10, debug=True)
+\end{lstlisting}
+
+If you have any question on this data structure, please post it on Piazza.
+
+\end{itemize}
+
+\subsection{Frame Class and ApplicationProcess Class}
+
+For the \texttt{Frame} class and \texttt{ApplicationProcess} class, please refer to the comments and descriptions in the source code for detail information.
+
+\noindent The Frame class can be found at the following location:
+
+\noindent\texttt{/home/ubuntu/lab3/.venv/lib/python3.5/site-packages/ece361/frame.py}
+
+\noindent The ApplicationProcess class can be found at the following location:
+
+\noindent\texttt{/home/ubuntu/lab3/.venv/lib/python3.5/site-packages/ece361/application.py}
 
 \end{document}
