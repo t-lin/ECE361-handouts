@@ -6,9 +6,9 @@
 
 % Lab parameters
 \def\thelab{4}
-\def\datedue{Mar. 20, 2020 @ 3 PM}
+\def\datedue{Mar. 21, 2020 @ 11:59 PM}
 
-\useCompactTitle{ECE361 Lab \thelab}{Lab Title Here}
+\useCompactTitle{ECE361 Lab \thelab}{Medium Access Control (MAC)}
 
 %-------------------------------------------------------------------------------------------------
 \begin{document}
@@ -23,24 +23,123 @@
 \section{Overview}
 \label{sec:overview}
 %-------------------------------------------------------------------------------------------------
-\textbf{TODO}
+One of the fundamental design challenges in networking is the issue of sharing access to a single communication medium.
+This challenge is apparent in wireless networks, but also exists in wired networks, as you’ll see in the second half of this lab.
+Medium Access Control (MAC) protocols enable multiple stations to share access to a single medium; and the choice of protocol (and its various parameters) directly affects the efficiency of the channel utilization.
+
+In this lab you will simulate two alternative Medium Access Control (MAC) protocols and explore their properties.
+In the first part, you will be given a working simulator for the ALOHA MAC protocol ("Pure ALOHA") to explore, which you must modify to implement Slotted ALOHA.
+In the second part of the lab, you will implement the core logic of a Carrier Sense Multiple Access with Collision Detection (CSMA/CD) simulator.
+
 
 %-------------------------------------------------------------------------------------------------
-\section{TA Grading}
-\label{sec:tagrading}
+\section{Part 1: Slotted ALOHA}
+\label{sec:sotted-aloha}
 %-------------------------------------------------------------------------------------------------
-\textbf{TODO}
+In this part, you will begin by taking the ALOHA simulator (given to you) and extend it to become Slotted ALOHA.
+In Slotted ALOHA, stations are synchronized to transmit frames only at the start of a slot interval, and thus, it is simply a discretized version of ALOHA.
+
+The code given to you takes a single command-line parameter, \texttt{G}, and runs the simulation based on that parameter.
+The output of the simulation will be appended to a file called \texttt{out.txt}, where each line is a comma-delimited entry showing \texttt{G} and \texttt{S}, respectively.
+When you run the simulation multiple times over, with varying values of \texttt{G}, you can populate the output file with a series of values \textbf{(see Lst. TODO)} which you can then graph \textbf{(see Fig. TODO)}.
+
+\begin{lstlisting}[style=ece361shell, caption={Sample data from \texttt{out.txt} for ALOHA}, label={lst:aloha-output}]
+0.03125,0.029624704097476643
+0.0625,0.057893199350203525
+0.125,0.10240504689659247
+0.25,0.15737031469013515
+0.5,0.19784254160579692
+1.0,0.1651676868095355
+2.0,0.04724612507409784
+\end{lstlisting}
+
+There are other parameters within the simulation code that you can alter, but for the purposes of the lab, we have hard-coded most of it for you.
+
+The code given to you has already calculated the slot interval.
+Study the code carefully, particularly when the stations decide to transmit a frame.
+Your task is to discretize the simulator by syncing the frame transmissions to the start of each interval.
+
+After you have made your modifications, generate a new G vs S curve and see if it matches the theoretical improvement of Slotted ALOHA over ALOHA \textbf{(see Fig. TODO)}.
+
+
+
+%-------------------------------------------------------------------------------------------------
+\section{Carrier Sense Multiple Access with Collision Detection (CSMA/CD)}
+\label{sec:csma-cd}
+%-------------------------------------------------------------------------------------------------
+Carrier Sense Multiple Access with Collision Detection (CSMA/CD) is a protocol for medium access in which stations can "sense" the medium and wait until it is quiet before transmitting a message (the "CS" part).
+While a station is transmitting, it continues sensing the medium to detect for transmissions from other stations, which would indicate a collision (the "CD" part).
+When a collision is detected, the station immediately stops, and reschedules the frame after some time.
+
+Hence, a station would only be aware of a collision if it receives a transmission from another station while it is sending.
+If a station finishes a transmission before the first bit of another station's frame arrives, then it will be unaware of the collision and falsely believe it successfully transmitted its prior frame.
+For CSMA-CD to properly function, stations must be accurately aware of all collisions so that they can reschedule collided frames.
+
+In this part of the lab, you will complete a CSMA-CD simulator that simply counts collisions: actual collisions versus station-aware collisions.
+If the number of actual collisions does not match the number of station-aware collisions, then the stations will inadvertently lose data.
+As you'll see, the ability of a station to detect a collision varies depending on different network characteristics and parameters.
+
+
+%-------------------------------------------------------------------------------------------------
+\subsection{Simulated Station Setup}
+\label{subsec:station-setup}
+%-------------------------------------------------------------------------------------------------
+This simulation models the setup of the stations in the following ways:
+\begin{itemize}
+    \item Assume the stations form a star topology, so all stations are equi-distant
+    \item Assume the stations are inter-connected by a hub (not a switch), and hence forms a single broadcast medium
+    \item The stations will generate a sequence of arrival times for \textit{N} number of frames (\textit{N} is a configurable parameter). If a frame cannot be sent at a given time (i.e. due to the medium being busy), that frame is rescheduled to the end of the arrival sequence.
+\end{itemize}
+
+%-------------------------------------------------------------------------------------------------
+\subsection{Simplified CSMA/CD Protocol}
+\label{subsec:simplified-csma-cd}
+%-------------------------------------------------------------------------------------------------
+The actual protocol you will complete is a simplified version of CSMA-CD.
+The key modifications, which will make the simulation easier, are as follows:
+\begin{itemize}
+    \item Upon collision detection, transmission does not stop (i.e. the stations involved will finish transmitting their frames)
+    \item When two frames collide, the frame that began transmission earlier in time "loses" (i.e. considered as 1 collision), while the frame that began transmission later in time "wins" (i.e. it can be counted as a success if and only if no subsequent frame collides with it)
+    \item Upon collision, no jamming or collision enforcement
+    \item No inter-frame spacing (i.e. once the medium is silent, stations with a frame can send)
+    \item No backoff mechanism. If a station has a frame to transmit and the medium is busy, it reschedules the frame to the end of its arrival sequence (see above section).
+\end{itemize}
+
 
 %-------------------------------------------------------------------------------------------------
 \section{Exerciser}
 \label{sec:exercise}
 %-------------------------------------------------------------------------------------------------
-\textbf{TODO}
+You can use the exerciser to help test the correctness of your implementation.
+The exerciser will run a set of public test cases against your code.
+However, note that the tests in the exerciser is not complete and it is your responsibility to test your code to make sure it conforms to the requirement of the lab.
+Ensure you have the following files all within the same directory:
+\begin{itemize}
+    \item \textbf{TODO}: TOOOOOOO DOOOOOOOOOOOOO
+\end{itemize}
+
+In terminal, browse to the directory containing the files and type \texttt{ece361-exercise \thelab}.
 
 %-------------------------------------------------------------------------------------------------
 \section{Submission}
 \label{sec:submission}
 %-------------------------------------------------------------------------------------------------
+Once you are confident of your implementation, you can run the submission process (which will invoke the exerciser before submitting).
+Only one person in the group needs to submit.
+
+From the same directory as where you ran the exerciser, type \texttt{ece361-submit submit \thelab}.
+
+You can then verify the submission by typing \texttt{ece361-submit list \thelab}.
+
+At some point after the lab's due date, private test cases will be run against your submission to calculate your final mark.
+
+%-------------------------------------------------------------------------------------------------
+\newpage
+\appendix
+\section{Appendix}
+\label{sec:appendix}
+%-------------------------------------------------------------------------------------------------
 \textbf{TODO}
+
 
 \end{document}
