@@ -28,12 +28,14 @@ This challenge is apparent in wireless networks, but also exists in wired networ
 Medium Access Control (MAC) protocols enable multiple stations to share access to a single medium; and the choice of protocol (and its various parameters) directly affects the efficiency of the channel utilization.
 
 In this lab you will simulate two alternative Medium Access Control (MAC) protocols and explore their properties.
-In the first part, you will be given a working simulator for the ALOHA MAC protocol ("Pure ALOHA") to explore, which you must modify to implement Slotted ALOHA.
+In the first part, you will be given a working simulator for the ALOHA MAC protocol ("Pure ALOHA"), which you must modify to implement Slotted ALOHA.
+The goal is to simply see the positive effect on channel utilization when stations are synchronized by a central clock, versus a completely unsynchronized and distributed solution.
 In the second part of the lab, you will implement the core logic of a Carrier Sense Multiple Access with Collision Detection (CSMA/CD) simulator.
+The goal in this part is to explore and observe how various network characteristics can influence the ability to accurately detect collisions.
 
 %-------------------------------------------------------------------------------------------------
 \section{Lab Initialization}
-\label{subsec:lab-init}
+\label{sec:lab-init}
 %-------------------------------------------------------------------------------------------------
 This lab includes starter code that uses a custom-built Python 3 library called \texttt{ece361}.
 A Python virtual environment will be created, that will include the library, where you will do all the work in this lab.
@@ -67,9 +69,19 @@ Once the virtual environment is activated, you should see a \texttt{(.venv)} app
 
 In your lab \thelab~working directory, you should have the following files:
 \begin{itemize}
-	\item \texttt{\textbf{TODO FILE}}
+	\item \texttt{\textbf{slotted\_aloha.py}}
         \begin{itemize}
-            \item \textbf{TO DO DESCRIPTION}
+            \item Simulator for Slotted ALOHA. By default, it implements ALOHA (i.e. non-slotted). You will have to modify it to implement Slotted ALOHA.
+        \end{itemize}
+
+	\item \texttt{\textbf{csma\_cd.py}}
+        \begin{itemize}
+            \item Simulator for CSMA/CD, separated from the core simulation logic.
+        \end{itemize}
+
+	\item \texttt{\textbf{simulation\_logic.py}}
+        \begin{itemize}
+            \item Skeleton code for the CSMA/CD simulator's logic. You will have to complete this file.
         \end{itemize}
 \end{itemize}
 
@@ -80,11 +92,11 @@ In your lab \thelab~working directory, you should have the following files:
 \section{Part 1: Slotted ALOHA}
 \label{sec:sotted-aloha}
 %-------------------------------------------------------------------------------------------------
-In this part, you will begin by taking an ALOHA simulator (given to you) and extending it to become Slotted ALOHA.
+In this part, you will take a fully working ALOHA simulator (given to you) and modify it to become Slotted ALOHA.
 In Slotted ALOHA, stations are synchronized to transmit frames only at the start of a slot interval, and thus, it is simply a discretized version of ALOHA.
-
 The provided simulator takes a single command-line parameter, \texttt{G}, and runs the simulation based on that parameter.
-Run the simulator by simply calling it with a parameter for G, as shown in Listing~\ref{lst:start-sim}.
+Run the simulator by simply calling it with a parameter for \texttt{G}, as shown in Listing~\ref{lst:start-sim}.
+Each run of the simulator should last roughly a minute.
 
 \begin{lstlisting}[style=ece361shell, caption={Running the Slotted ALOHA simulator (default behaviour is ALOHA)}, label={lst:start-sim}]
 (.venv) ubuntu@361:~/lab4$ python3 slotted_aloha.py
@@ -105,8 +117,8 @@ USAGE: python3 slotted_aloha.py <total arrival rate G>
 \end{lstlisting}
 
 
-The result of the simulation will be appended to a file called \texttt{out.txt} (one will be created if it doesn't already exist), where each line is a comma-delimited entry showing \texttt{G} and \texttt{S}, respectively.
-When you run the simulation multiple times over, with varying values of \texttt{G}, you can populate the output file with a series of data points, as seen in Listing~\ref{lst:aloha-output}.
+The result of the simulation will be appended to a file called \texttt{out.txt} (one will be created if it doesn't already exist). It will be a simple comma-delimited entry showing \texttt{G} and \texttt{S}, respectively.
+If you run the simulation multiple times with varying values of \texttt{G}, you can populate the output file with a series of data points, as seen in Listing~\ref{lst:aloha-output}.
 
 \begin{lstlisting}[style=ece361shell, caption={Sample data from \texttt{out.txt} for ALOHA}, label={lst:aloha-output}]
 0.03125,0.029624704097476643
@@ -118,15 +130,16 @@ When you run the simulation multiple times over, with varying values of \texttt{
 2.0,0.04724612507409784
 \end{lstlisting}
 
+\work{Try the unmodified simulator now, by running it with the \texttt{G} values shown in Listing~\ref{lst:aloha-output} (i.e. the value before the comma). See if you can produce a similar set of numbers with a similar pattern.}
+
 You can use this data to then graph the \texttt{G} vs \texttt{S} curves you have seen from lecture (e.g. see Fig.~\ref{pure-aloha}).
 There are other parameters within the simulation code as well, but for the purposes of the lab, we have hard-coded them for you.
-\warn{Do NOT modify the hard-coded parameters, it may affect the simulator's ability to produce accurate results.}
+\warn{Do NOT modify the hard-coded parameters, it may affect the simulator's ability to produce the correct results. If you wish, you may alter the \texttt{RUN\_TIME} parameter. A longer running time would produce more stable results.}
 \figvs{0.6}{pure-aloha}{trim=0cm 0cm 0cm 0cm,clip}{Sample graph of ALOHA based on simulator's output.}
 
-The code given to you has already calculated the slot interval.
-Study the code carefully, particularly when the stations decide to transmit a frame.
+\work{Your task is to discretize the simulator by syncing the frame transmissions to the start of each interval. The provided code has already calculated the slot interval, stored in a variable called \texttt{SLOT\_INTERVAL}.}
 
-\work{Your task is to discretize the simulator by syncing the frame transmissions to the start of each interval.}
+\hint{Focus on the \texttt{Station} function, which implements the logic of the stations. Looking at the code, see if you can figure out how the stations decide when to transmit their next frame. That is all you need to modify.}
 
 After you have made your modifications, generate a new \texttt{G} vs \texttt{S} curve and see if it matches the theoretical improvement of Slotted ALOHA over ALOHA (see Fig.~\ref{pure-vs-slotted}).
 
@@ -135,10 +148,10 @@ After you have made your modifications, generate a new \texttt{G} vs \texttt{S} 
 
 
 %-------------------------------------------------------------------------------------------------
-\section{Carrier Sense Multiple Access with Collision Detection\newline(CSMA/CD)}
+\section{Part 2: Carrier Sense Multiple Access with Collision Detection\newline(CSMA/CD)}
 \label{sec:csma-cd}
 %-------------------------------------------------------------------------------------------------
-Carrier Sense Multiple Access with Collision Detection (CSMA/CD) is a protocol for medium access in which stations can "sense" the medium and wait until it is quiet before transmitting a message (the "CS" part).
+Carrier Sense Multiple Access with Collision Detection (CSMA/CD) is a protocol for medium access in which stations "sense" the medium and wait until it is quiet before transmitting a frame (the "CS" part).
 While a station is transmitting, it continues sensing the medium to detect for transmissions from other stations, which would indicate a collision (the "CD" part).
 When a collision is detected, the station immediately stops, and reschedules the frame after some time.
 
@@ -157,7 +170,7 @@ As you'll see, the ability of a station to detect a collision varies depending o
 %-------------------------------------------------------------------------------------------------
 This simulation models the setup of the stations in the following ways:
 \begin{itemize}
-    \item Assume the stations form a star topology, so all stations are equi-distant. Thus, propagation delay is constant.
+    \item Assume the stations form a star topology, so all stations are equidistant. Thus, propagation delay is constant.
     \item Assume the stations are inter-connected by a hub (not a switch), and hence forms a single broadcast medium.
     \item The stations will pre-generate a sequence of arrival times for \textit{N} number of frames (\textit{N} is a configurable parameter). If a frame cannot be sent at a given time (i.e. due to the medium being busy), that frame is rescheduled to the end of the arrival sequence.
     \item All frames during the simulation are constant length (a configurable parameter).
@@ -170,11 +183,11 @@ This simulation models the setup of the stations in the following ways:
 The actual protocol you will complete is a simplified version of CSMA/CD.
 The key modifications, which will make the simulation easier, are as follows:
 \begin{itemize}
-    \item Upon collision detection, transmission does not stop (i.e. the stations involved will finish transmitting their frames). The source station should not attempt to re-transmit this frame.
     \item When two frames collide, the frame that began transmission earlier in time "loses" (i.e. considered as 1 collision), while the frame that began transmission later in time "wins" (i.e. it can potentially be counted as a success, if and only if no subsequent frame collides with it).
+    \item Upon collision detection, transmission does not stop (i.e. the stations involved will finish transmitting their frames). The source station should not attempt to re-transmit this frame.
     \item Upon collision, no jamming or collision enforcement is done by the stations.
     \item No inter-frame spacing (i.e. once the medium is silent, stations with a frame can send).
-    \item No backoff mechanism. If a station has a frame to transmit and the medium is busy, it reschedules the frame to the end of its arrival sequence (see above section).
+    \item No backoff mechanism. If a station has a frame to transmit and the medium is busy, it reschedules the frame to the end of its arrival sequence.
 \end{itemize}
 
 %-------------------------------------------------------------------------------------------------
@@ -202,15 +215,17 @@ This can be visualized as seen in Fig.~\ref{collision-notaware}.
 
 In this case, a collision has clearly occurred.
 However, whether or not the source station for the first frame becomes aware of the collision depends on whether the first bit of the second frame is able to propagate back to the first station before the first station finishes sending its frame.
-In the case of Fig.~\ref{collision-notaware}, the answer is no. Thus, the first station will falsely believe it successfully transmitted and delivered the frame.
+In the case of Fig.~\ref{collision-notaware}, the answer is no.
+Thus, the first station will falsely believe it successfully transmitted and delivered the frame.
 
-On the other hand, if the first bit of the second frame propagates back to the first station while its still transmitting, then the first station becomes aware of the collision and properly detects it.
-This is illustrated in Fig.~\ref{collision-aware}.
+On the other hand, if the first bit of the second frame propagates back to the first station while it is still transmitting, then the first station becomes aware of the collision and properly detects it.
+This scenario is illustrated in Fig.~\ref{collision-aware}.
 \figvs{0.6}{collision-aware}{trim=0cm 0cm 0cm 0cm,clip}{Example of when a frame collides, and the source station is aware of the collision.}
 
 
 \textbf{Case 2:} Given two frame arrival times from two different stations, the latter frame arrives to find the medium busy, and reschedules the frame (i.e. puts it to the end of its arrival sequence).
-This is illustrated in Fig.~\ref{frame-reschedule}.
+This is illustrated in Fig.~\ref{frame-reschedule}, where the frame arriving at Station 1 will have to be rescheduled.
+
 
 \figvs{0.6}{frame-reschedule}{trim=0cm 0cm 0cm 0cm,clip}{Example of when a frame arrives while the medium is busy.}
 
@@ -223,6 +238,81 @@ This case is illustrated in Fig.~\ref{no-contention}.
 
 \think{Given the three scenarios illustrated, consider how the network diameter (i.e. the station-to-station distance), the frame size, and channel bandwidth can all affect the stations' ability to detect collisions.}
 
+%-------------------------------------------------------------------------------------------------
+\subsection{Completing the Simulator}
+\label{subsec:complete-simulator}
+%-------------------------------------------------------------------------------------------------
+We have provided you with \texttt{csma\_cd.py} and \texttt{simulation\_logic.py}.
+
+\work{In the \texttt{simulation\_logic.py} file, complete the \texttt{RunSimulation()} function to implement the simulation logic as described in section~\ref{subsec:logic}.}
+
+To help you with your task, a class called \texttt{FrameMetadata} has been provided for you to work with.
+It is a simple object with two member variables: \texttt{.stnID} to denote the source station it is from, and \texttt{.arrTime} to denote its arrival time to the station (i.e. its transmission start time if the station thinks the medium is free).
+
+\hint{Read the comments in the file carefully. In particular, the differences between the \texttt{numActualCollisions}, \texttt{numStnObsvCollisions}, and \texttt{numStnObsvSuccess} variables, which the \texttt{RunSimulation()} function must return.}
+
+%-------------------------------------------------------------------------------------------------
+\subsection{Running the Simulator}
+\label{subsec:running-simulator}
+%-------------------------------------------------------------------------------------------------
+To run the simulator, simply execute \texttt{csma\_cd.py}, as shown in Listing~\ref{lst:start-csma-cd}.
+\begin{lstlisting}[style=ece361shell, caption={Running the CSMA/CD simulator}, label={lst:start-csma-cd}]
+(.venv) ubuntu@361:~/lab4$ python3 csma_cd.py
+
+====================
+SIMULATION PARAMETERS:
+  - NUM_STATIONS = 3
+  - NUM_FRAMES = 1000000 (per station)
+  - ARR_RATE = 10000.0 (frames / sec)
+  - FRAME_SIZE = 512 (bits)
+  - MEDIUM_BW = 10000000 (bits / sec)
+  - MEDIUM_DIAMETER = 2500 (metres)
+  - MEDIUM_VELOCITY = 97656250 (metres / sec)
+  - SERIALIZATION_DELAY = 5.12e-05 (sec)
+  - PROP_DELAY = 2.56e-05 (sec)
+  - NORM_DELAY_BW = 0.5
+
+====================
+Generating arrival times...
+Generated 3000000 arrivals in 0.8805019855499268 seconds
+
+====================
+Starting CSMA-CD simulation...
+
+...
+
+\end{lstlisting}
+
+The default configuration simulates a 10 Mbps channel with a network diameter of 2500 metres, and a frame size of 512 bits.
+If you completed the simulator correctly, the results at the end of the simulation will show that the number of collisions (perceived by the stations) should match the number of actual collisions that occured.
+Similarly, the number of successful transmissions (perceived by the stations) should match the number of actual successful transmissions.
+This is seen in the sample output shown in Listing~\ref{lst:csma-cd-output}.
+
+\hint{If you want a deterministic output, you can seed the random generation of frame arrivals by running the simulator with the \texttt{-{}-seed} flag. e.g. \texttt{python3 csma\_cd.py -{}-seed 12345}}
+
+
+\begin{lstlisting}[style=ece361shell, caption={Sample output of CSMA/CD simulator, where the stations accurately counted the number of collisions.}, label={lst:csma-cd-output}]
+...
+
+====================
+Stations' statistics (stations' point-of-view):
+  - Number of successful transmissions: "2072048 (69.068 %)"
+  - Number of frame collisions: "927952"
+  - Efficiency of channel utilization: "41.694 %"
+
+Actual statistics:
+  - Number of successful transmissions: "2072048 (69.068 %)"
+  - Number of frame collisions: "927952"
+  - Efficiency of channel utilization: "41.694 %"
+\end{lstlisting}
+
+Once you have achieved this with the default parameters, then you can begin altering the default configurations by changing various aspects of the simulation.
+\hint{If you simply run \texttt{python3 csma\_cd.py -h}, you can see the list of parameters you can alter by using command-line flags.
+These include: the number of stations, the number of frames per station, the frame arrival rate per station, the frame size, the channel bandwidth, the network diameter, a seed value for deterministic arrival patterns, and a flag to quiet the output.}
+
+\think{If you increase the network diameter, while leaving every other parameter as default, the stations start to believe they had more successful frame transmissions than actually occurred. Why? Similarly, try just increasing the bandwidth, or just decreasing the frame size.}
+
+\think{As you slowly increase the frame size, while leaving every other parameter as default, you'll see the efficiency of the channel utilization rise. Why?}
 
 %-------------------------------------------------------------------------------------------------
 \section{Exerciser}
@@ -233,7 +323,8 @@ The exerciser will run a set of public test cases against your code.
 However, note that the tests in the exerciser is not complete and it is your responsibility to test your code to make sure it conforms to the requirement of the lab.
 Ensure you have the following files all within the same directory:
 \begin{itemize}
-    \item \textbf{TODO}: TOOOOOOO DOOOOOOOOOOOOO
+    \item \textbf{slotted\_aloha.py}: Your completed Slotted ALOHA simulator.
+    \item \textbf{simulation\_logic.py}: Your completed simulation logic for the CSMA/CD simulator.
 \end{itemize}
 
 In terminal, browse to the directory containing the files and type \texttt{ece361-exercise \thelab}.
@@ -250,14 +341,6 @@ From the same directory as where you ran the exerciser, type \texttt{ece361-subm
 You can then verify the submission by typing \texttt{ece361-submit list \thelab}.
 
 At some point after the lab's due date, private test cases will be run against your submission to calculate your final mark.
-
-%-------------------------------------------------------------------------------------------------
-\newpage
-\appendix
-\section{Appendix}
-\label{sec:appendix}
-%-------------------------------------------------------------------------------------------------
-\textbf{TODO}
 
 
 \end{document}
