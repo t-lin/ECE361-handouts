@@ -81,7 +81,7 @@ In your lab \thelab~working directory, you should have the following files:
 
 	\item \texttt{\textbf{simulation\_logic.py}}
         \begin{itemize}
-            \item Skeleton code for the CSMA/CD simulator's logic. You will have to complete this file.
+            \item Starter code for the CSMA/CD simulator's logic. You will have to complete this file.
         \end{itemize}
 \end{itemize}
 
@@ -246,10 +246,32 @@ We have provided you with \texttt{csma\_cd.py} and \texttt{simulation\_logic.py}
 
 \work{In the \texttt{simulation\_logic.py} file, complete the \texttt{RunSimulation()} function to implement the simulation logic as described in section~\ref{subsec:logic}.}
 
-To help you with your task, a class called \texttt{FrameMetadata} has been provided for you to work with.
-It is a simple object with two member variables: \texttt{.stnID} to denote the source station it is from, and \texttt{.arrTime} to denote its arrival time to the station (i.e. its transmission start time if the station thinks the medium is free).
-
 \hint{Read the comments in the file carefully. In particular, the differences between the \texttt{numActualCollisions}, \texttt{numStnObsvCollisions}, and \texttt{numStnObsvSuccess} variables, which the \texttt{RunSimulation()} function must return.}
+
+
+%-------------------------------------------------------------------------------------------------
+\subsubsection{The \texttt{FrameMetadata} Class}
+\label{subsubsec:framemetadata}
+%-------------------------------------------------------------------------------------------------
+To help you with your task, a class called \texttt{FrameMetadata} has been provided for you to work with.
+It is a simple object to hold metadata about a single frame, with two member variables:
+\begin{itemize}
+    \item \texttt{FrameMetadata.stnID}: Denotes the source station this frame is from; and
+    \item \texttt{FrameMetadata.arrTime}: Denotes the arrival time of the frame to the station (i.e. its transmission start time, if the medium is free).
+\end{itemize}
+
+%-------------------------------------------------------------------------------------------------
+\subsubsection{The \texttt{StationArrivals} Class}
+\label{subsubsec:stationarrivals}
+%-------------------------------------------------------------------------------------------------
+Another class you will use is the \texttt{StationArrivals} class.
+The first parameter passed into the \texttt{RunSimulation()} function is an instance of this class.
+In particular, there are two class methods you need to be aware of:
+\begin{itemize}
+    \item \texttt{StationArrivals.getNextArrival()}: Finds the next earliest frame arrival among all stations, and returns an instance of \texttt{FrameMetadata}. If every station has transmitted all their frames, then it returns \texttt{None}.
+    \item \texttt{StationArrivals.rescheduleFrame(frameMeta)}: Given an instance of \texttt{FrameMetadata}, re-schedules the frame to the end of the station's arrival sequence. Does not return anything.
+\end{itemize}
+
 
 %-------------------------------------------------------------------------------------------------
 \subsection{Running the Simulator}
@@ -310,9 +332,11 @@ Once you have achieved this with the default parameters, then you can begin alte
 \hint{If you simply run \texttt{python3 csma\_cd.py -h}, you can see the list of parameters you can alter by using command-line flags.
 These include: the number of stations, the number of frames per station, the frame arrival rate per station, the frame size, the channel bandwidth, the network diameter, a seed value for deterministic arrival patterns, and a flag to quiet the output.}
 
-\think{If you increase the network diameter, while leaving every other parameter as default, the stations start to believe they had more successful frame transmissions than actually occurred. Why? Similarly, try just increasing the bandwidth, or just decreasing the frame size.}
-
 \think{As you slowly increase the frame size, while leaving every other parameter as default, you'll see the efficiency of the channel utilization rise. Why?}
+
+\think{If you increase the network diameter, while leaving every other parameter as default, the stations start to believe they had more successful frame transmissions than actually occurred. Why? Similarly, try just increasing the bandwidth, or just decreasing the frame size. What key parameter from class did you learn about that relates to all this?}
+
+\think{If you look on Wikipedia's page about the Ethernet frame, you may have noticed that it lacks a key header that most other protocols have: length. Its minimum frame size must be exactly 64 Bytes. Can you understand why?}
 
 %-------------------------------------------------------------------------------------------------
 \section{Exerciser}
