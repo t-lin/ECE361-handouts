@@ -6,9 +6,9 @@
 
 % Lab parameters
 \def\thelab{5}
-\def\datedue{Apr. 3, 2020 @ 3 PM}
+\def\datedue{Apr. 9, 2020 @ 11:59 PM}
 
-\useCompactTitle{ECE361 Lab \thelab}{Lab Title Here}
+\useCompactTitle{ECE361 Lab \thelab}{Switching and Routing}
 
 %-------------------------------------------------------------------------------------------------
 \begin{document}
@@ -26,21 +26,85 @@
 \textbf{TODO}
 
 %-------------------------------------------------------------------------------------------------
-\section{TA Grading}
-\label{sec:tagrading}
+\section{Lab Initialization}
+\label{sec:lab-init}
 %-------------------------------------------------------------------------------------------------
-\textbf{TODO}
+\textbf{TODO: Is there a custom lib for this lab??}
+
+This lab includes starter code that uses a custom-built Python 3 library called \texttt{ece361}.
+A Python virtual environment will be created, that will include the library, where you will do all the work in this lab.
+We have provided an initialization script for you that will setup this virtual environment, along with the starter code, and the custom library.
+
+\hint{It's highly recommended to update your VM before starting each lab. Open a terminal (in the VM), and type \texttt{ece361-update}}
+
+To run the initialization script for lab \thelab, open a terminal and type \texttt{ece361-lab-init \thelab}.
+You should see something similar to Listing~\ref{lst:init-example}.
+
+\begin{lstlisting}[style=ece361shell, caption={Initializing lab \thelab.}, label={lst:init-example}]
+ubuntu@ece361:~$ ece361-lab-init (@"\thelab"@)
+Finding available UG EECG host...
+Warning: Permanently added 'ug251.eecg.utoronto.ca,128.100.13.251' (ECDSA) to the list of known hosts.
+Creating working directory for lab (@"\thelab"@) at (@"\btHL /home/ubuntu/lab\thelab"@)
+Creating Python3 virtual environment...
+Installing libraries...
+
+...
+
+Done. Now run (@"\btHL source /home/ubuntu/lab\thelab/sourceMe"@) to activate the virtual environment.
+\end{lstlisting}
+
+The initialization script creates a working directory for this lab, located at \texttt{\textasciitilde/lab\thelab}.
+To activate the virtual environment, run the source command as shown in Listing \ref{lst:init-example}.
+Once the virtual environment is activated, you should see a \texttt{(.venv)} appear at the beginning of your prompt.
+
+\point{You will need to activate the virtual environment \textbf{in each terminal} that runs code belonging to this lab.}
+
+\warn{The \texttt{ece361} library used in this lab is different than the ones from the previous three labs. Your code from the previous labs will not work in this new virtual environment.}
+
+In your lab \thelab~working directory, you should have the following files:
+\begin{itemize}
+    \item \texttt{\textbf{TODO FILENAME}}
+        \begin{itemize}
+            \item \textbf{TODO} File descriptions
+        \end{itemize}
+
+    \item \texttt{\textbf{TODO FILENAME}}
+        \begin{itemize}
+            \item \textbf{TODO} File descriptions
+        \end{itemize}
+\end{itemize}
+
+\point{If you discover a bug in any of the files provided, please report it on Piazza.}
+
 
 %-------------------------------------------------------------------------------------------------
 \section{Exerciser}
 \label{sec:exercise}
 %-------------------------------------------------------------------------------------------------
-\textbf{TODO}
+You can use the exerciser to help test the correctness of your implementation.
+The exerciser will run a set of public test cases against your code.
+However, note that the tests in the exerciser is not complete and it is your responsibility to test your code to make sure it conforms to the requirement of the lab.
+Ensure you have the following files all within the same directory:
+\begin{itemize}
+    \item \textbf{TODO FILENAME}: Your completed \textbf{TODO FILE DESC}.
+    \item \textbf{TODO FILENAME}: Your completed \textbf{TODO FILE DESC}.
+\end{itemize}
+
+In terminal, browse to the directory containing the files and type \texttt{ece361-exercise \thelab}.
+
 
 %-------------------------------------------------------------------------------------------------
 \section{Submission}
 \label{sec:submission}
 %-------------------------------------------------------------------------------------------------
-\textbf{TODO}
+Once you are confident of your implementation, you can run the submission process (which will invoke the exerciser before submitting).
+Only one person in the group needs to submit.
+
+From the same directory as where you ran the exerciser, type \texttt{ece361-submit submit \thelab}.
+
+You can then verify the submission by typing \texttt{ece361-submit list \thelab}.
+
+At some point after the lab's due date, private test cases will be run against your submission to calculate your final mark.
+
 
 \end{document}
