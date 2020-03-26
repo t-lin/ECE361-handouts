@@ -23,7 +23,18 @@
 \section{Overview}
 \label{sec:overview}
 %-------------------------------------------------------------------------------------------------
-\textbf{TODO}
+The countless hosts that comprise the Internet, from your laptop, to your phone, to security cameras, etc. are all inter-connected by packet forwarding devices.
+The vast majority of these devices function as switches and/or routers.
+\begin{itemize}
+    \item \textit{Switching} is used when inter-connecting hosts within a single local area network (LAN).
+    \item \textit{Routing}, on the other hand, is used to inter-connect two or more LANs, enabling hosts belonging to different networks to communicate.
+\end{itemize}
+While these two functions both pass packets from one interface to another, they operate on different layers of the network stack.
+In particular, switches work by looking only at the layer 2 addresses (e.g. Ethernet MAC addresses) in packets, while routers look at layer 3 addresses (e.g. IP addresses).
+
+In this lab, you will explore these concepts in more detail.
+In the first part, you will implement the core learning logic of switches to enable hosts in a network to communicate.
+In the second part, you will implement the base functionality of routers to enable hosts across networks to communicate.
 
 %-------------------------------------------------------------------------------------------------
 \section{Lab Initialization}
