@@ -34,13 +34,13 @@ In particular, switches work by looking only at the layer 2 addresses (e.g. Ethe
 
 In this lab, you will explore these concepts in more detail.
 In the first part, you will implement the core learning logic of switches to enable hosts in a network to communicate.
-In the second part, you will implement the base functionality of routers to enable hosts across networks to communicate.
+In the second part, you will add VLANs as a set of logical ports to share the same flooding or broadcast characteristics.
+And in the last part, you will implement the base functionality of routers to enable hosts across different networks to communicate.
 
 %-------------------------------------------------------------------------------------------------
 \section{Lab Initialization}
 \label{sec:lab-init}
 %-------------------------------------------------------------------------------------------------
-\textbf{TODO: Is there a custom lib for this lab??}
 
 This lab includes starter code that uses a custom-built Python 3 library called \texttt{ece361}.
 A Python virtual environment will be created, that will include the library, where you will do all the work in this lab.
@@ -72,56 +72,250 @@ Once the virtual environment is activated, you should see a \texttt{(.venv)} app
 
 \warn{The \texttt{ece361} library used in this lab is different than the ones from the previous three labs. Your code from the previous labs will not work in this new virtual environment.}
 
-In your lab \thelab~working directory, you should have the following files:
+In your lab \thelab~working directory, you will work with two files only:
 \begin{itemize}
-    \item \texttt{\textbf{TODO FILENAME}}
+    \item \texttt{switch\_router.py}
         \begin{itemize}
-            \item \textbf{TODO} File descriptions
+            \item Starter code for switching and routing in this lab. You need to complete a few functions in this file to complete the lab.
         \end{itemize}
 
-    \item \texttt{\textbf{TODO FILENAME}}
+    \item \texttt{CONFIG}
         \begin{itemize}
-            \item \textbf{TODO} File descriptions
+            \item Config file which contains only two variables. You can control whether you are working on the first, second or the third part of the lab using these variables which will be explained later.
+        \end{itemize}
+
+\end{itemize}
+
+The other files in your directory which you do not need to touch them are:
+\begin{itemize}
+    \item \texttt{network\_topo\_part1.py}
+        \begin{itemize}
+            \item The network topology for the first part of the lab. You only run this file to create the virtual network using Mininet and do not need to change it.
+        \end{itemize}
+
+    \item \texttt{network\_topo\_part2.py}
+        \begin{itemize}
+            \item The network topology for the second part of the lab. You only run this file to create the virtual network using Mininet and do not need to change it.
+        \end{itemize}
+
+    \item \texttt{lab5-controller}
+        \begin{itemize}
+            \item An script which runs the controller. The controller enables you to manage the bridges in your network.
+        \end{itemize}
+
+    \item \texttt{IP\_CONFIG}
+        \begin{itemize}
+            \item Contains the IP information of the hosts and router interfaces within the network. No need to change anything in this file.
+        \end{itemize}
+
+    \item \texttt{VLAN\_CONFIG}
+        \begin{itemize}
+            \item Contains VLAN information for the second part of the lab. No need to change anything in this file.
+        \end{itemize}
+    \item \texttt{ROUTING}
+        \begin{itemize}
+            \item The routing information which is used by the router in the third part of the lab. No need to change anything in this file.
         \end{itemize}
 \end{itemize}
+
+\hint{\textbf{Summary:} You only need to complete a few functions in the file \texttt{switch\_router.py} and change variables in the \texttt{CONFIG} file to control which part of the lab you are working on. You do not need to touch other files.}
 
 \point{If you discover a bug in any of the files provided, please report it on Piazza.}
 
 %-------------------------------------------------------------------------------------------------
 \section{Part 1: Switching}
-\label{sec:exercise}
+\label{sec:exercise1}
 %-------------------------------------------------------------------------------------------------
-\textbf{TODO}
 
-See Fig.~\ref{switching-topo}.
 
-\figvs{0.6}{switching-topo}{trim=0cm 0cm 0cm 0cm,clip}{Topology for part 1.}
+In the lecture, you have seen that hosts in a LAN are connected to a shared medium and can communicate with each other. The shared medium may also be connected to a bridge (we use the word bridge and switch interchangeably in this lab).
+Thus, hosts connected to the shared medium can talk to each other as well as to hosts on the other LANs which are connected to the bridge (Fig.~\ref{part-1-sw-1}). 
+
+\figvs{0.55}{part-1-sw-1}{trim=0cm 0cm 0cm 0cm,clip}{LAN using shared medium to connect hosts in each LAN. They all are connected by the bridges.}
+
+Hosts can also be connected directly to bridges and create a LAN, as shown in Fig.~\ref{part-1-sw-2}. In this way, all hosts connected to the same bridge are part of the same LAN. In this lab, we assume each host is connected to a bridge directly.
+
+\figvs{0.6}{part-1-sw-2}{trim=0cm 0cm 0cm 0cm,clip}{Topology for part 1, using bridge to connect hosts in a LAN}
+
+For the first part, we have provided the topology file to build a network like Fig.~\ref{part-1-sw-2}. You can execute the file \texttt{network\_topo\_part1.py} with sudo privileges, as shown in Listing~\ref{lst:start-net-topo-1}. After running this file, a mininet terminal shows up.
+
+
+\begin{lstlisting}[style=ece361shell, caption={Execute the the network topology file to create the virtual network}, label={lst:start-net-topo-1}]
+(.venv) ubuntu@361:~/lab5$ sudo python network_topo_part1.py
+\end{lstlisting}
+
+\figvs{0.85}{frame-1}{trim=0cm 0cm 0cm 0cm,clip}{A frame arrives at port 0 of the bridge}
+
+Once a packet arrives in a bridge, the bridge does not know what action should be performed on the packet. The packet may be forwarded, discarded or may be altered. As shown in Fig.~\ref{frame-1}, each frame has a source and destination MAC addresses which show the MAC address of its sender and its destination. When the packet arrives from a port in the bridge, the bridge learns that the sender of the packet is reachable from that port. For instance, in Fig.~\ref{frame-1}, the bridge learns that the source with \texttt{MAC: 00:00:00:00:00:01} is reachable using port 0. Thus, it binds the port with the source MAC address of the frame in its forwarding table. However, it does not have any idea of which output port can be used to send the packet. It can see the destination MAC address but that does now tell the bridge which port should be used. Hence, it floods the packet to all its port and everyone connected to the bridge gets the packet. But only the destination host responds and acknowledges the packet. When the bridge gets the reply from the destination through a port, it binds that port with the source MAC address of the reply packet as shown in Fig.~\ref{frame-1-reply}. The process of learning MAC addresses and binding them to appropriate ports is called learning.
+
+\figvs{0.85}{frame-1-reply}{trim=0cm 0cm 0cm 0cm,clip}{A reply frame arrives at port 1 of the bridge.}
+
+
+Your job in this part, is to handle the learning for the bridge by filling out two functions in the \texttt{switch\_router.py} file:
+\begin{enumerate}
+    \item \textbf{learn\_mac\_to\_port(dpid, eth\_src, in\_port)}: Perform learning when a packet with the given source Ethernet address (eth\_src) arrives in a given bridge (specified by the dpid) on the given port (in\_port). This function is called when a new packet arrives at bridge. Please take a look at the codes and comments to familiar yourself with the format of the parameters and the output. This function return nothing.
+
+    \item \textbf{get\_out\_port(dpid, eth\_dst)}: We fill the forwarding table and learn the addresses and the corresponding ports in the bridge using the \texttt{learn\_mac\_to\_port} function. In this function \texttt{get\_out\_port)}, we return what we have learnt so far. Given a bridge (specified by the dpid) and the destination Ethernet address (eth\_dst), this function returns the appropriate output port. This is done by looking up the forwarding table of the bridge with the given dpid. Please take a look at comments and the code to familiar yourself with the formats. This function should return a single number (int), specifying which port is destined to the destination with \texttt{eth\_dst} in the bridge with id \texttt{dpid}.
+
+\end{enumerate}
+
+Each bridge has a unique identifier named as \texttt{dpid}. We use the dpid in almost all functions to distinguish between different bridges in the network. You can think of \texttt{dpid} as a bridge id.
+
+Once you write the required functions, you can test the network. 
+All bridges and routers in the network are under control of a controller. Your code is also being executed by the controller. You can start, restart and stop the controller using our script \texttt{lab5-controller} in the lab directory, as shown in Listing~\ref{lst:start-controller}. The output of the conroller execution is stored in a log file in the lab directory. It also contains output of any \texttt{print} statements in your code.
+
+
+\begin{lstlisting}[style=ece361shell, caption={Create the network topology for first part}, label={lst:start-controller}]
+(.venv) ubuntu@361:~/lab5$ ./lab5-controller start
+\end{lstlisting}
+
+Once you run the \texttt{lab5-controller}, and the \texttt{network\_topo\_part1.py}, you can test your codes. In the terminal which you run the \texttt{network\_topo\_part1.py} file, a Mininet terminal is available. You can issue the commands within each virtual hosts to check their connectivity with other hosts. For example please look at Listing~\ref{lst:start-mininet}.
+
+\begin{lstlisting}[style=ece361shell, caption={Create the network topology for first part}, label={lst:start-mininet}]
+(.venv) ubuntu@ece361:~/lab5$ ./lab5-controller start
+Started new Ryu instance with PID 30043
+(.venv) ubuntu@ece361:~/lab5$ sudo python network_topo_part1.py 
+*** Adding controller
+*** Adding hosts
+*** Adding Routers
+*** Creating links
+*** Starting network
+*** Configuring hosts
+h1 h2 h3 h4 h5 
+*** Starting controller
+c0 
+*** Starting 4 switches
+s1 s2 s3 s4 ...
+*** Running CLI
+*** Starting CLI:
+mininet> h1 ping -c1 h2
+PING 10.0.1.12 (10.0.1.12) 56(84) bytes of data.
+64 bytes from 10.0.1.12: icmp_seq=1 ttl=64 time=3.83 ms
+...
+mininet> h2 ping -c1 h4
+PING 10.0.1.14 (10.0.1.14) 56(84) bytes of data.
+64 bytes from 10.0.1.14: icmp_seq=1 ttl=64 time=6.64 ms
+...
+mininet> pingall
+*** Ping: testing ping reachability
+h1 -> h2 h3 h4 h5 
+h2 -> h1 h3 h4 h5 
+h3 -> h1 h2 h4 h5 
+h4 -> h1 h2 h3 h5 
+h5 -> h1 h2 h3 h4 
+*** Results: 0% dropped (20/20 received)
+mininet> exit
+*** Stopping network*** Stopping 1 controllers
+c0 
+*** Stopping 8 links
+........
+*** Stopping 4 switches
+s1 s2 s3 s4 
+*** Stopping 5 hosts
+h1 h2 h3 h4 h5 
+*** Done
+\end{lstlisting}
+
+
+You may also check the logs or output of your print statements by looking into \texttt{controller.log}, as shown in Listing~\ref{lst:check-controller-logs}. 
+
+
+\begin{lstlisting}[style=ece361shell, caption={Create the network topology for first part}, label={lst:check-controller-logs}]
+(.venv) ubuntu@361:~/lab5$ tail controller.log
+\end{lstlisting}
+
+\hint{The \texttt{tail -n100} shows the last 100 lines in the file.}
+
 
 %-------------------------------------------------------------------------------------------------
-\section{Part 2: Routing}
-\label{sec:exercise}
+\section{Part 2: VLAN}
+\label{sec:exercise2}
 %-------------------------------------------------------------------------------------------------
-\textbf{TODO}
+\figvs{0.85}{part-2-sw-1}{trim=0cm 0cm 0cm 0cm,clip}{Topology for part 2, VLAN network}
 
-See Fig.~\ref{routing-topo}.
+Continuing from the previous part, we want to have a set of logical ports to share the same flooding or broadcast characteristicsto. Consider the netowrk topology for this part as Fig.~\ref{part-2-sw-1}. The purple hosts belong to \texttt{VLAN1} while, the black ones belong to the \texttt{VLAN2}. Since it is a layer 2 network without any VLAN, all hosts can reach to each other, while in a VLAN network only hosts within the same VLAN should be able to communicate to each other. For instance, all purple hosts should be able to reach to each other and all black hosts should be reachable from black hosts. A purple host cannot communicate with a black host. Your job is to do the learning again in this part, but considering having VLANs in the network. The information of VLAN configuration is available in \texttt{VLAN\_CONFIG} file, but you do not need to modify its content. You are asked to complete two functions in the \texttt{switch\_router.py} file:
 
-\figvs{0.6}{routing-topo}{trim=0cm 0cm 0cm 0cm,clip}{Topology for part 2, three LAN networksinter-connected by a router.}
+
+\begin{enumerate}
+    \item \textbf{get\_vlans\_of\_port(dpid, port\_no)}: Returns a list of VLAN name(s) for the given port of the given bridge with dpid. To do so, you sould use vlan\_to\_port variable which is populated automatically for you. The output of the function is a list of VLANs for the given port\_no in the bridge with the given dpid.
+
+    \item \textbf{get\_out\_port\_vlan(dpid, source\_host\_vlans, mac\_addr):}: Return the appropriate output port when VLAN is enabled. You have to consider two cases:\\
+        1. If the destination MAC address is in the forwarding\_table, then return the output port
+           if it match with the given packet VLAN\\
+        2. If the output port corresponding to the MAC is not in the forwarding\_table, then,
+          return back all ports that match with the given packet VLAN (Not all VLANs).
+
+\end{enumerate}
+
+To run and check your functions you have to perform three steps:
+\begin{enumerate}
+    \item \textbf{Update CONFIG file}: Change the \texttt{"VLAN"} to \texttt{"enable"} in the \texttt{CONFIG} file.
+    \item \textbf{Run the controller}: Run the controller
+    \item \textbf{Run the network topology file}: Execute the \texttt{network\_topo\_part2.py}
+\end{enumerate}
+
+
+\begin{lstlisting}[style=ece361shell, caption={Create the network topology for first part}, label={lst:start-mininet2}]
+(.venv) ubuntu@ece361:~/lab5$ ./lab5-controller restart
+No current instance of Ryu found to be running
+Started new Ryu instance with PID 31267
+(.venv) ubuntu@ece361:~/lab5$ sudo python network_topo_part2.py 
+*** Adding controller
+*** Adding hosts
+*** Adding Routers
+*** Creating links
+*** Starting network
+*** Configuring hosts
+h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 
+*** Starting controller
+c0 
+*** Starting 4 switches
+s1 s2 s3 s4 ...
+*** Running CLI
+*** Starting CLI:
+mininet> h1 ping -c1 h3
+PING 10.0.1.13 (10.0.1.13) 56(84) bytes of data.
+64 bytes from 10.0.1.13: icmp_seq=1 ttl=64 time=7.66 ms
+
+--- 10.0.1.13 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 7.669/7.669/7.669/0.000 ms
+mininet> h1 ping -c1 h2
+PING 10.0.1.12 (10.0.1.12) 56(84) bytes of data.
+From 10.0.1.11 icmp_seq=1 Destination Host Unreachable
+
+--- 10.0.1.12 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+mininet> 
+\end{lstlisting}
+
+You may check the logs of the controller for possible errors or outputs. Then in the Mininet terminal you can test the connectivity between each hosts. For example see the Listing~\ref{lst:start-mininet2}. 
+
+
+
+%-------------------------------------------------------------------------------------------------
+\section{Part 3: Routing}
+\label{sec:exercise3}
+%-------------------------------------------------------------------------------------------------
+The third part of this lab is to consider a layer 3 network. This part will be released later.
 
 %-------------------------------------------------------------------------------------------------
 \section{Exerciser}
 \label{sec:exercise}
 %-------------------------------------------------------------------------------------------------
-You can use the exerciser to help test the correctness of your implementation.
-The exerciser will run a set of public test cases against your code.
-However, note that the tests in the exerciser is not complete and it is your responsibility to test your code to make sure it conforms to the requirement of the lab.
-Additionally, we may test your code with custom topologies.
-Ensure you have the following files all within the same directory:
-\begin{itemize}
-    \item \textbf{TODO FILENAME}: Your completed \textbf{TODO FILE DESC}.
-    \item \textbf{TODO FILENAME}: Your completed \textbf{TODO FILE DESC}.
-\end{itemize}
+You can use the exerciser to help test the correctness of your implementation. The exerciser for this lab will be released later.
+% The exerciser will run a set of public test cases against your code.
+% However, note that the tests in the exerciser is not complete and it is your responsibility to test your code to make sure it conforms to the requirement of the lab.
+% Additionally, we may test your code with custom topologies.
+% Ensure you have the following files all within the same directory:
+% \begin{itemize}
+%     \item \textbf{TODO FILENAME}: Your completed \textbf{TODO FILE DESC}.
+%     \item \textbf{TODO FILENAME}: Your completed \textbf{TODO FILE DESC}.
+% \end{itemize}
 
-In terminal, browse to the directory containing the files and type \texttt{ece361-exercise \thelab}.
+% In terminal, browse to the directory containing the files and type \texttt{ece361-exercise \thelab}.
+
 
 
 %-------------------------------------------------------------------------------------------------
