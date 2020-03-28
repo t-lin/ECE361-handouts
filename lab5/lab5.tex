@@ -44,9 +44,9 @@ And in the last part, you will implement the base functionality of routers to en
 \label{sec:lab-init}
 %-------------------------------------------------------------------------------------------------
 
-This lab includes starter code that uses a custom-built Python 3 library called \texttt{ece361}.
-A Python virtual environment will be created, that will include the library, where you will do all the work in this lab.
-We have provided an initialization script for you that will setup this virtual environment, along with the starter code, and the custom library.
+This lab includes starter code that will be executed by a network controller.
+A Python virtual environment will be created that will include the controller.
+We have provided an initialization script for you that will setup this virtual environment, along with the starter code.
 
 \hint{It's highly recommended to update your VM before starting each lab. Open a terminal (in the VM), and type \texttt{ece361-update}}
 
@@ -200,14 +200,15 @@ Once you write the required functions, you can test the network.
 All bridges in the network are managed by a network controller. Your code will also be executed by the controller. You can start, restart and stop the controller using the \texttt{lab5-controller} script in the lab directory. For example, to start the controller, see Listing~\ref{lst:start-controller}.
 
 
-\begin{lstlisting}[style=ece361shell, caption={Create the network topology for first part}, label={lst:start-controller}]
+\begin{lstlisting}[style=ece361shell, caption={Sample output when starting the network controller.}, label={lst:start-controller}]
 (.venv) ubuntu@361:~/lab5$ ./lab5-controller start
+Started new Ryu instance with PID 30043
 \end{lstlisting}
 
 Once you start the network controller using \texttt{lab5-controller}, and create the network by running \texttt{network\_topo\_part1.py}, you can test your code.
 In the terminal where you run the \texttt{network\_topo\_part1.py} file, a Mininet terminal is available. You can issue the commands within each virtual hosts to check their connectivity with other hosts. For an example of the basic Mininet commands you'll need, please study Listing~\ref{lst:start-mininet} carefully.
 
-\begin{lstlisting}[style=ece361shell, caption={Create the network topology for first part}, label={lst:start-mininet}]
+\begin{lstlisting}[style=ece361shell, caption={Sample workflow for creating the topology in part 1 and testing the code.}, label={lst:start-mininet}]
 (.venv) ubuntu@ece361:~/lab5$ ./lab5-controller start
 Started new Ryu instance with PID 30043
 (.venv) ubuntu@ece361:~/lab5$ sudo python network_topo_part1.py
@@ -252,11 +253,13 @@ h1 h2 h3 h4 h5
 *** Done
 \end{lstlisting}
 
-The output of the controller is stored in a log file in the lab directory called \texttt{controller.log}.
-The log file will also contains the output of any \texttt{print()} statements you choose to include in your code (useful for debugging).
-You may check the log by looking at the end of the \texttt{controller.log} file, as shown in Listing~\ref{lst:check-controller-logs}.
+\hint{If you change your code, you will have to restart the controller. However, you do not have to re-create the topology.}
 
-\begin{lstlisting}[style=ece361shell, caption={Create the network topology for first part}, label={lst:check-controller-logs}]
+To help you debug, the output of the controller is stored in a log file in the lab directory called \texttt{controller.log}.
+The log file also contains the output of any \texttt{print()} statements you choose to include in your code.
+You may check the log by looking at the end of the \texttt{controller.log} file using the \texttt{tail} command, as shown in Listing~\ref{lst:check-controller-logs}.
+
+\begin{lstlisting}[style=ece361shell, caption={Checking the last few lines of the controller's output log file.}, label={lst:check-controller-logs}]
 (.venv) ubuntu@361:~/lab5$ tail controller.log
 \end{lstlisting}
 
@@ -308,8 +311,9 @@ To run and check your functions you have to perform three steps:
 \end{enumerate}
 
 You may check the logs of the controller for possible errors or outputs.
-Then in the Mininet terminal you can test the connectivity between each hosts. For example see the Listing~\ref{lst:start-mininet2}.
-\begin{lstlisting}[style=ece361shell, caption={Create the network topology for first part}, label={lst:start-mininet2}]
+Then in the Mininet terminal you can test the connectivity between each hosts.
+For example, in Listing~\ref{lst:start-mininet2}, note that host 1 is able to ping host 3, but it is unable to ping host 2.
+\begin{lstlisting}[style=ece361shell, caption={Sample workflow for creating the topology in part 2 and testing the code.}, label={lst:start-mininet2}]
 (.venv) ubuntu@ece361:~/lab5$ ./lab5-controller restart
 No current instance of Ryu found to be running
 Started new Ryu instance with PID 31267
