@@ -182,10 +182,10 @@ When the bridge first receives the reply frame from the destination host through
 %-------------------------------------------------------------------------------------------------
 Your job in this part of the lab is to handle the learning for the bridges in the network by completing two functions in the \texttt{switch\_router.py} file:
 \begin{itemize}
-    \item \textbf{learn\_mac\_to\_port(dpid, eth\_src, in\_port)}: Perform learning when a frame with the given source MAC (Ethernet) address (\texttt{eth\_src}) arrives at bridge (specified by \texttt{dpid}) on the given input port (\texttt{in\_port}). This function is called whenever a frame arrives at a bridge, and it populates the forwarding table for the bridge. Please take a look at the comments in the skeleton code to familiar yourself with the format of the parameters and the output. This function return nothing.
+    \item \textbf{learn\_mac\_to\_port(dpid, eth\_src, in\_port)}: Perform learning when a frame with the given source MAC (Ethernet) address (\texttt{eth\_src}) arrives at bridge (specified by \texttt{dpid}) on the given input port (\texttt{in\_port}). This function is called whenever a frame arrives at a bridge, and it populates the forwarding table for the bridge. Please take a look at the comments in the starter code to familiar yourself with the format of the parameters and the output. This function return nothing.
 
     %We fill the forwarding table and learn the addresses and the corresponding ports in the bridge using the \texttt{learn\_mac\_to\_port()} function. In this function \texttt{get\_out\_port()}, we return what we have learnt so far.
-    \item \textbf{get\_out\_port(dpid, eth\_dst)}: Given a bridge (specified by \texttt{dpid}) and the destination MAC (Ethernet) address (\texttt{eth\_dst}), this function returns the appropriate output port. This is done by looking up the forwarding table of the bridge with the given \texttt{dpid}. Please take a look at comments in the skeleton code to familiar yourself with the formats. This function should return a single number (int), specifying which output port to send the frame out on.
+    \item \textbf{get\_out\_port(dpid, eth\_dst)}: Given a bridge (specified by \texttt{dpid}) and the destination MAC (Ethernet) address (\texttt{eth\_dst}), this function returns the appropriate output port. This is done by looking up the forwarding table of the bridge with the given \texttt{dpid}. Please take a look at comments in the starter code to familiar yourself with the formats. This function should return a single number (int), specifying which output port to send the frame out on.
     %destination with \texttt{eth\_dst} in the bridge with id \texttt{dpid}.
 
 \end{itemize}
@@ -399,6 +399,28 @@ When the frame arrives at the router, the router looks into its routing table an
 %Using the routing table, the right interface is selected to send out the frame.
 
 %-------------------------------------------------------------------------------------------------
+\subsection{Updating the Starter Code}
+\label{subsec:update-starter-code}
+%-------------------------------------------------------------------------------------------------
+\textbf{This section is only relevant if you have already started the lab and previously ran the lab init script prior to the release of part 3. If you ran the init script after the release of lab 3, proceed to subsection~\ref{subsec:routing}.}
+
+Please update the starter code by running \texttt{ece361-lab-init \thelab} again. You should see something similar to Listing~\ref{lst:update-starter-example}.
+
+\begin{lstlisting}[style=ece361shell, caption={Updating the lab \thelab~starter code.}, label={lst:update-starter-example}]
+ubuntu@ece361:~$ ece361-lab-init (@"\thelab"@)
+Finding available UG EECG host...
+Warning: Permanently added 'ug251.eecg.utoronto.ca,128.100.13.251' (ECDSA) to the list of known hosts.
+Updating code and config files for Part 3...
+Saving copy of switch_router.py as switch_router.py.1585636916
+Editing switch_router.py to add new variables and functions...
+patching file switch_router.py
+Done editing switch_router.py
+\end{lstlisting}
+
+The working directory (i.e. \texttt{\textasciitilde/lab\thelab}) should now contain a new file: \texttt{network\_topo\_part3.py}.
+Additionally, the \texttt{switch\_router.py} file should contain five new functions at the bottom of the file: \texttt{get\_bridgeName\_by\_dpid()}, \texttt{get\_mac\_by\_ip()}, \texttt{is\_ip\_within\_net()}, \texttt{get\_out\_iface\_info()}, and \texttt{send\_frame\_by\_router()}. The first three are helper functions which you will need to use in completing the last two functions.
+
+%-------------------------------------------------------------------------------------------------
 \subsection{Task}
 \label{subsec:routing}
 %-------------------------------------------------------------------------------------------------
@@ -406,12 +428,14 @@ For this last part, your task is to find the correct source and destination IP a
 
 
 \begin{itemize}
-    \item \textbf{send\_frame\_by\_router(dpid, src\_mac, dst\_mac, src\_ip, dst\_ip)}: This function is called when a frame arrives at the router. Given the \texttt{dpid} of the router, and the layer 2 and 3 addresses of the received frame, this function returns a Python List object containing the source MAC, destination MAC, source IP, destination IP, and the output interface number. \textbf{Note that the order of these values should be exactly as described.}
+    \item \textbf{send\_frame\_by\_router(dpid, src\_mac, dst\_mac, src\_ip, dst\_ip)}: This function is called when a frame arrives at the router. Given the \texttt{dpid} of a router, and the layer 2 and 3 addresses of the received frame, this function returns a Python List object containing the source MAC, destination MAC, source IP, destination IP, and the output interface number. \textbf{Note that the order of these values should be exactly as described.}
     %The router asks for appropriate source and destination IP and MAC addresses as well as the interfaces the frame should be sent out to.
 
     \item \textbf{get\_out\_iface\_info(dpid, ip\_addr):} Given the \texttt{dpid} of a router and an IP address \texttt{ip\_addr}, this function finds the interface that should be used to send a frame to reach destination \texttt{ip\_addr}. Returns the interface's IP address and output interface number.
     %In a router, when its interface is directly connected to LAN, the next-hop IP is the router interface IP.
 \end{itemize}
+
+\hint{Carefully read the comments for the three helper functions to understand their usage before you begin your coding.}
 
 You may check your work by following these steps:
 \begin{enumerate}
