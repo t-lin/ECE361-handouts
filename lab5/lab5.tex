@@ -418,7 +418,7 @@ Done editing switch_router.py
 \end{lstlisting}
 
 The working directory (i.e. \texttt{\textasciitilde/lab\thelab}) should now contain a new file: \texttt{network\_topo\_part3.py}.
-Additionally, the \texttt{switch\_router.py} file should contain five new functions at the bottom of the file: \texttt{get\_bridgeName\_by\_dpid()}, \texttt{get\_mac\_by\_ip()}, \texttt{is\_ip\_within\_net()}, \texttt{get\_out\_iface\_info()}, and \texttt{send\_frame\_by\_router()}. The first three are helper functions which you will need to use in completing the last two functions.
+Additionally, the \texttt{switch\_router.py} file should contain two new member variables at the top of the class, and five new member functions at the bottom of the class. The new member variables are: \texttt{self.routing\_table} and \texttt{self.ip\_to\_mac}. The new functions are: \texttt{get\_bridgeName\_by\_dpid()}, \texttt{get\_mac\_by\_ip()}, \texttt{is\_ip\_within\_net()}, \texttt{get\_out\_iface\_info()}, and \texttt{send\_frame\_by\_router()}. The new member variables and the first three member functions are helpers which you will need to use in completing the last two functions.
 
 %-------------------------------------------------------------------------------------------------
 \subsection{Task}
@@ -435,7 +435,7 @@ For this last part, your task is to find the correct source and destination IP a
     %In a router, when its interface is directly connected to LAN, the next-hop IP is the router interface IP.
 \end{itemize}
 
-\hint{Carefully read the comments for the three helper functions to understand their usage before you begin your coding.}
+\hint{Carefully read the comments for the two new member variables and the three helper functions to understand their usage before you begin your coding.}
 
 You may check your work by following these steps:
 \begin{enumerate}
