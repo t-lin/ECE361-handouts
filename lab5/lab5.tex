@@ -35,7 +35,7 @@ In particular, bridges work by looking only at the layer 2 addresses (e.g. Ether
 In this lab, you will explore these concepts in more detail.
 In the first part, you will implement the core learning logic of bridges to enable hosts in a network to communicate.
 In the second part, you will add virtual LANs (VLANs) as a set of logical ports to share the same flooding or broadcast characteristics.
-And in the last part, you will implement the base functionality of routers to enable hosts across different networks to communicate.
+Finally, in the last part, you will implement the base functionality of routers to enable hosts across different networks to communicate.
 
 \point{Note that in this lab, we use the words 'bridge' and 'switch' interchangeably.}
 
@@ -353,39 +353,74 @@ mininet>
 \section{Part 3: Routing}
 \label{sec:exercise3}
 %-------------------------------------------------------------------------------------------------
-To connect multiple LAN and create a larger network, we use routers. We replace one of the bridges in part 2 with a router (named as \texttt{r4}) and create three different LANs, as shown in Fig.~\ref{part-3-router-1}. 
+To connect multiple LANs and create an \textit{inter-network} topology, we use routers.
+As shown in Fig.~\ref{part-3-router-1}, we replace one of the bridges in part 2 with a router (named as \texttt{r4}), segmenting the hosts into three different LANs.
 
-\figvs{0.85}{part-3-router-1}{trim=0cm 0cm 0cm 0cm,clip}{Topology for Part 3, Routing}
+\figvs{0.8}{part-3-router-1}{trim=0cm 0cm 0cm 0cm,clip}{Topology for Part 3, Routing}
 
-Each host, as well as each router's interfaces, have their own IP addresses. A host can detect if the destination host is in the same VLAN by comparing their IPs and netmasks. 
-If it detects the destination host does not belong to the same LAN, it merely creates the frame with its source IP and MAC addresses and the destination IP of the target host but with the destination MAC address of the router interface which connects to its LAN. Each router's interfaces act like a host that is connected to the LAN. The router then looks into its routing table. 
+\point{In this part, we will use the term \textit{interface} to talk about the ports on a router.}
 
-A routing table determines which router interfaces should be used to send the frame out to the target host. The entries in the routing table can be inserted manually or dynamically using routing algorithms. Then, the router creates another frame with the same source and destination IP of the received frame, but with its MAC address as the source MAC address and the next-hop MAC address as the destination MAC address of the frame. 
+Each host, as well as each one of the router's interfaces, has an IP address.
+Note the similarity between the router's IP address for interface \texttt{eth1}, and the IP addresses for hosts within the LAN interconnected by switch \texttt{s1} (i.e. hosts 1 to 4).
+Note the same pattern for the other router interfaces' IP address, and the addresses of the hosts in the LANs reachable via that interface.
+The router acts as a common host between all three LANs that it is connected to. Unlike a regular host, it performs the special task of \texttt{routing} frames between its various interfaces.
 
-In Fig.~\ref{part-3-router-1}, assume Host 1 wants to send a frame to Host 8. It detects Host 8 is in another network. Thus, it constructs a frame with its source IP and MAC addresses and IP address of Host 8. But it puts the MAC address of the router's interface, which is connected to its LAN (i.e. r4-eth1) as the destination MAC address. The bridge \texttt{s1} then forwards the frame to the router.
 
-When the frame arrives at the router, the router looks into its routing table and search for an entry which includes the destination IP address of the frame. Using the routing table, the right interface is selected to send out the frame. 
+%-------------------------------------------------------------------------------------------------
+\subsection{Operation of Hosts}
+\label{subsec:logic-hosts}
+%-------------------------------------------------------------------------------------------------
+When a host wishes to send a frame, it is able to determine if the destination host is within the same LAN by comparing the destination's IP with its own IP.
+If it determines that the destination host is within the same LAN, it creates a frame where the layer 3 (IP) source and destination fields are its own IP, and the destination host's IP. The layer 2 source and destination fields will be its own MAC address, and the destination's MAC address.
+On the other hand, if it determines the destination host is outside its LAN, it still creates a frame with its own source IP, the destination's IP, and its own source MAC address; however, the destination MAC address will be the router's interface which connects to the LAN.
+
+\point{Layer 2 addresses (Ethernet MACs) are always local within the LAN.}
+
+%and MAC addresses and the destination IP of the target host but with the destination MAC address of the router interface which connects to its LAN. Each router's interfaces act like a host that is connected to the LAN. The router then looks into its routing table.
+
+%-------------------------------------------------------------------------------------------------
+\subsection{Operation of Routers}
+\label{subsec:logic-routers}
+%-------------------------------------------------------------------------------------------------
+When a router receives a frame on one of its interfaces, must determine which of its interfaces should be used to send the frame out on to reach the target host.
+To accomplish this, it looks up a \textit{routing table}. A sample routing table is shown in Fig.~\ref{part-3-router-1}.
+%A routing table determines which of the router's interfaces should be used to send the frame out to the target host.
+The entries in the routing table can be inserted manually or dynamically using routing algorithms.
+If the router determines that the received frame is destined for a LAN on another interface (i.e. not the same interface upon which it arrived on), then the router creates a new frame to send out on the interface connected to the destination IPs LAN.
+In this new frame, it uses the same layer 3 source and destination as the received frame, but with its own MAC address and the destination host's MAC address as the layer 2 source and destination.
+
+\point{Layer 3 addresses can be used across networks -{}- they are inter-network addresses!}
+
+\think{Under what circumstances would a router receive a frame on an interface, where the destination host is reachable upon the same interface it arrived on?}
+
+In Fig.~\ref{part-3-router-1}, assume Host 1 wants to send a frame to Host 8. It determines that Host 8 is in another network.
+Thus, it constructs a frame with its source IP and MAC address, and IP address of Host 8, but it uses the MAC address of the router interface connected to its LAN (i.e. \texttt{r4-eth1}) as the destination MAC address. The bridge \texttt{s1}, being unaware of layer 3 addresses, simply forwards the frame to the router.
+When the frame arrives at the router, the router looks into its routing table and searches for the interface whose IP address is in the same network as the destination IP address of the frame, and sends the frame out on that interface.
+%Using the routing table, the right interface is selected to send out the frame.
 
 %-------------------------------------------------------------------------------------------------
 \subsection{Task}
 \label{subsec:routing}
 %-------------------------------------------------------------------------------------------------
-For the last part, you should find out the right source and destination IP and MAC addresses, as well as the interface in which a frame should be sent to when it arrives at the router. In particular, you have to complete these functions:
+For this last part, your task is to find the correct source and destination IP and MAC addresses, as well as the interface on which a frame should be sent out, when it arrives at the router. In particular, you have to complete these functions:
 
 
 \begin{itemize}
-    \item \textbf{send\_frame\_by\_router(dpid, src\_mac, dst\_mac, src\_ip, dst\_ip)}: This function is called when a frame arrives at the router. The router asks for appropriate source and destination IP and MAC addresses as well as the interfaces the frame should be sent out to. You should return a list containing source MAC, destination MAC, source IP, destination IP and the interface number. The order of these values should be the same as mentioned.
+    \item \textbf{send\_frame\_by\_router(dpid, src\_mac, dst\_mac, src\_ip, dst\_ip)}: This function is called when a frame arrives at the router. Given the \texttt{dpid} of the router, and the layer 2 and 3 addresses of the received frame, this function returns a Python List object containing the source MAC, destination MAC, source IP, destination IP, and the output interface number. \textbf{Note that the order of these values should be exactly as described.}
+    %The router asks for appropriate source and destination IP and MAC addresses as well as the interfaces the frame should be sent out to.
 
-    \item \textbf{get\_next\_hop(dpid, ip\_addr):} Returns the next-hop IP and output port number. In a router, when its interface is directly connected to LAN, the next-hop IP is the router interface IP. 
+    \item \textbf{get\_out\_iface\_info(dpid, ip\_addr):} Given the \texttt{dpid} of a router and an IP address \texttt{ip\_addr}, this function finds the interface that should be used to send a frame to reach destination \texttt{ip\_addr}. Returns the interface's IP address and output interface number.
+    %In a router, when its interface is directly connected to LAN, the next-hop IP is the router interface IP.
 \end{itemize}
 
 You may check your work by following these steps:
 \begin{enumerate}
     \item \textbf{Update CONFIG file}: Change the \texttt{"VLAN"} to \texttt{"disable"} and \texttt{L3} to \texttt{"enable"} in the \texttt{CONFIG} file. If you do not change the \texttt{"VLAN"} to \texttt{"disable"} the controller does not work for this part.
-    \item \textbf{Run the controller}: Run (or restart) the controller. Please note, each time you chagne your code, you have to restart the controller.
+    \item \textbf{Run the controller}: Run (or restart) the controller. Each time you change your code, you have to restart the controller.
     \item \textbf{Run the network topology file}: Execute the \texttt{network\_topo\_part3.py} file.
 \end{enumerate}
-For example, for a comeplete code, you may see the similar results as shown in Listing~\ref{lst:start-mininet3}:
+
+When you have properly completed the code, you will see results similar to Listing~\ref{lst:start-mininet3}:
 
 \begin{lstlisting}[style=ece361shell, caption={Sample workflow for creating the topology in part 3 and testing the code.}, label={lst:start-mininet3}]
 (.venv) ubuntu@ece361:~/lab5$ ./lab5-controller restart
@@ -398,9 +433,9 @@ Started new Ryu instance with PID 31234
 *** Creating links
 *** Starting network
 *** Configuring hosts
-h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 
+h1 h2 h3 h4 h5 h6 h7 h8 h9 h10
 *** Starting controller
-c0 
+c0
 *** Starting 4 switches
 s1 s2 s3 r4 ...
 *** Running CLI
@@ -412,25 +447,18 @@ PING 10.0.1.13 (10.0.1.13) 56(84) bytes of data.
 --- 10.0.1.13 ping statistics ---
 1 frames transmitted, 1 received, 0% packet loss, time 0ms
 rtt min/avg/max/mdev = 7.669/7.669/7.669/0.000 ms
-mininet> h1 ping -c1 h2
-PING 10.0.1.12 (10.0.1.12) 56(84) bytes of data.
-From 10.0.1.11 icmp_seq=1 Destination Host Unreachable
-
---- 10.0.1.12 ping statistics ---
-1 frames transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
-
 mininet> pingall
 *** Ping: testing ping reachability
-h1 -> h2 h3 h4 h5 h6 h7 h8 h9 h10 
-h2 -> h1 h3 h4 h5 h6 h7 h8 h9 h10 
-h3 -> h1 h2 h4 h5 h6 h7 h8 h9 h10 
-h4 -> h1 h2 h3 h5 h6 h7 h8 h9 h10 
-h5 -> h1 h2 h3 h4 h6 h7 h8 h9 h10 
-h6 -> h1 h2 h3 h4 h5 h7 h8 h9 h10 
-h7 -> h1 h2 h3 h4 h5 h6 h8 h9 h10 
-h8 -> h1 h2 h3 h4 h5 h6 h7 h9 h10 
-h9 -> h1 h2 h3 h4 h5 h6 h7 h8 h10 
-h10 -> h1 h2 h3 h4 h5 h6 h7 h8 h9 
+h1 -> h2 h3 h4 h5 h6 h7 h8 h9 h10
+h2 -> h1 h3 h4 h5 h6 h7 h8 h9 h10
+h3 -> h1 h2 h4 h5 h6 h7 h8 h9 h10
+h4 -> h1 h2 h3 h5 h6 h7 h8 h9 h10
+h5 -> h1 h2 h3 h4 h6 h7 h8 h9 h10
+h6 -> h1 h2 h3 h4 h5 h7 h8 h9 h10
+h7 -> h1 h2 h3 h4 h5 h6 h8 h9 h10
+h8 -> h1 h2 h3 h4 h5 h6 h7 h9 h10
+h9 -> h1 h2 h3 h4 h5 h6 h7 h8 h10
+h10 -> h1 h2 h3 h4 h5 h6 h7 h8 h9
 *** Results: 0% dropped (90/90 received)
 \end{lstlisting}
 
